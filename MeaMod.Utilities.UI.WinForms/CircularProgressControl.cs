@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -75,6 +76,7 @@ namespace MeaMod.Utilities.UI.WinForms
         /// <summary>
         /// Time interval for each tick.
         /// </summary>
+        [DefaultValue(10)]
         public int Interval
         {
             get
@@ -97,11 +99,13 @@ namespace MeaMod.Utilities.UI.WinForms
         /// <summary>
         /// Color of the tick
         /// </summary>
+        [DefaultValue(typeof(Color), "58, 58, 58")]
         public Color TickColor { get; set; }
 
         /// <summary>
         /// Direction of rotation - CLOCKWISE/ANTICLOCKWISE
         /// </summary>
+        [DefaultValue(Direction.CLOCKWISE)]
         public Direction Rotation
         {
             get
@@ -118,6 +122,7 @@ namespace MeaMod.Utilities.UI.WinForms
         /// <summary>
         /// Angle at which the tick should start
         /// </summary>
+        [DefaultValue(45)]
         public float StartAngle
         {
             get

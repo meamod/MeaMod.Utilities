@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <Company>MeaMod Group</Company>
-	  <Copyright>Copyright © 2024 James Weston (MeaMod Group)</Copyright>
+	  <Copyright>Copyright © 2026 James Weston (MeaMod Group)</Copyright>
 	  <Authors>MeaMod Group</Authors>
 	  <Description>MeaMod.Utilities.Security is a .NET standard 2.0 implementation of Test-FileCatalog from Microsoft.PowerShell.Security</Description>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Memory" Version="4.5.0" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
   </ItemGroup>
 
   <ItemGroup>
