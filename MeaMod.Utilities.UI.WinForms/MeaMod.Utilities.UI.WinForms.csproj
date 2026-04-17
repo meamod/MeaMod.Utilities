@@ -8,14 +8,14 @@
     <Authors>MeaMod Group</Authors>
     <Description>MeaMod.Utilities.UI.WinForms is a collection of useful WinForms controls for .NET development</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>1.3.0.1402</AssemblyVersion>
-    <FileVersion>1.3.0.1402</FileVersion>
+    <AssemblyVersion>1.3.1.1405</AssemblyVersion>
+    <FileVersion>1.3.1.1405</FileVersion>
     <PackageProjectUrl>https://github.com/meamod/MeaMod.Utilities</PackageProjectUrl>
     <RepositoryUrl>https://github.com/meamod/MeaMod.Utilities</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>utilities controls</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>1.3.0.1402</Version>
+    <Version>1.3.1</Version>
     <NeutralLanguage>en-GB</NeutralLanguage>
   </PropertyGroup>
 

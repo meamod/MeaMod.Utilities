@@ -9,14 +9,14 @@
 	  <Authors>MeaMod Group</Authors>
 	  <Description>MeaMod.Utilities.Security is a .NET standard 2.0 implementation of Test-FileCatalog from Microsoft.PowerShell.Security</Description>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
-	  <AssemblyVersion>1.0.3.103</AssemblyVersion>
-	  <FileVersion>1.0.3.103</FileVersion>
+	  <AssemblyVersion>1.0.4.105</AssemblyVersion>
+	  <FileVersion>1.0.4.105</FileVersion>
 	  <PackageProjectUrl>https://github.com/meamod/MeaMod.Utilities</PackageProjectUrl>
 	  <RepositoryUrl>https://github.com/meamod/MeaMod.Utilities</RepositoryUrl>
 	  <RepositoryType>git</RepositoryType>
 	  <PackageTags>utilities</PackageTags>
 	  <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-	  <Version>1.0.3</Version>
+	  <Version>1.0.4</Version>
 	  <NeutralLanguage>en-GB</NeutralLanguage>
 	  <LangVersion>latest</LangVersion>
 	  <PackageIcon>MeaMod-Utilities.png</PackageIcon>
