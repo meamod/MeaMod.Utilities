@@ -48,43 +48,64 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
         /// </summary>
         public virtual void Start()
         {
-            if (this.pingTask != null && this.pingTask.Status == TaskStatus.Running)
+            // IsCompleted covers every "still alive" state (WaitingToRun, Running, ...), not just Running,
+            // so two quick Start() calls cannot spawn two ping loops.
+            if (this.pingTask != null && !this.pingTask.IsCompleted)
                 return;
             this.pingCancellationToken = new CancellationTokenSource();
-            this.pingTask = Task.Factory.StartNew(new Action(this.ExecutePing), this.pingCancellationToken.Token);
+            // The loop itself observes the token; it is not passed to StartNew so that ExecutePing always runs
+            // and always raises the Stopped state when it exits.
+            this.pingTask = Task.Factory.StartNew(new Action(this.ExecutePing), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         /// <summary>Triggers the stop of the pinging process.</summary>
         public virtual void Stop()
         {
-            if (this.pingTask != null && this.pingTask.Status == TaskStatus.Running && this.pingCancellationToken != null)
-                this.pingCancellationToken.Cancel();
-            this.OnStateChangedEvent(PingManagerStates.Stopped);
+            Task task = this.pingTask;
+            if (task != null && !task.IsCompleted)
+            {
+                // The ping loop raises the Stopped state once it has actually exited.
+                this.pingCancellationToken?.Cancel();
+            }
+            else
+            {
+                this.OnStateChangedEvent(PingManagerStates.Stopped);
+            }
         }
 
         /// <summary>Actually execute the ping.</summary>
         protected virtual void ExecutePing()
         {
-            while (!this.pingCancellationToken.Token.IsCancellationRequested)
+            CancellationToken token = this.pingCancellationToken.Token;
+            try
             {
-                this.OnStateChangedEvent(PingManagerStates.Pinging);
-                using (Ping ping = new Ping())
+                while (!token.IsCancellationRequested)
                 {
-                    try
+                    this.OnStateChangedEvent(PingManagerStates.Pinging);
+                    using (Ping ping = new Ping())
                     {
-                        this.OnPingResult(ping.Send(this.HostName, 5000), (Exception)null);
+                        try
+                        {
+                            this.OnPingResult(ping.Send(this.HostName, 5000), (Exception)null);
+                        }
+                        catch (PingException ex)
+                        {
+                            this.OnPingResult((PingReply)null, (Exception)ex);
+                        }
+                        catch (SocketException ex)
+                        {
+                            this.OnPingResult((PingReply)null, (Exception)ex);
+                        }
                     }
-                    catch (PingException ex)
-                    {
-                        this.OnPingResult((PingReply)null, (Exception)ex);
-                    }
-                    catch (SocketException ex)
-                    {
-                        this.OnPingResult((PingReply)null, (Exception)ex);
-                    }
+                    this.OnStateChangedEvent(PingManagerStates.Idle);
+                    // Wakes up as soon as Stop() cancels, instead of sleeping for the whole interval.
+                    if (token.WaitHandle.WaitOne(this.TimeBetweenPings))
+                        break;
                 }
-                this.OnStateChangedEvent(PingManagerStates.Idle);
-                Thread.Sleep(this.TimeBetweenPings);
+            }
+            finally
+            {
+                this.OnStateChangedEvent(PingManagerStates.Stopped);
             }
         }
 
@@ -94,9 +115,7 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
         /// <param name="newState">The new state of the ping manager.</param>
         protected virtual void OnStateChangedEvent(PingManagerStates newState)
         {
-            if (this.PingManagerStateChanged == null)
-                return;
-            this.PingManagerStateChanged((object)this, new PingManagerStateChangedEventArgs(newState));
+            this.PingManagerStateChanged?.Invoke(this, new PingManagerStateChangedEventArgs(newState));
         }
 
         /// <summary>
@@ -106,9 +125,7 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
         /// <param name="exception">The exception that was thrown, if any, or null.</param>
         protected virtual void OnPingResult(PingReply reply, Exception exception)
         {
-            if (this.PingResult == null)
-                return;
-            this.PingResult((object)this, new PingResultEventArgs(reply, exception));
+            this.PingResult?.Invoke(this, new PingResultEventArgs(reply, exception));
         }
     }
 }

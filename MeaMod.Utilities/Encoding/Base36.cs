@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
@@ -25,7 +24,8 @@ namespace MeaMod.Utilities.BaseEncoding
         /// <returns>True if the value would cause an overflow, false otherwise</returns>
         public static bool WouldOverflow(string value)
         {
-            return _Compare(Min, value) < 0 || _Compare(value, Max) < 0;
+            value = Sanitize(value);
+            return _Compare(value, Min) < 0 || _Compare(value, Max) > 0;
         }
 
         /// <summary>
@@ -34,7 +34,10 @@ namespace MeaMod.Utilities.BaseEncoding
         /// </summary>
         /// <param name="valueA">First value of the comparison</param>
         /// <param name="valueB">Second value of the comparison</param>
-        /// <returns>A integer indicating how the two values relate together</returns>
+        /// <returns>
+        /// Less than zero if <paramref name="valueA"/> is less than <paramref name="valueB"/>, zero if they are equal,
+        /// greater than zero if <paramref name="valueA"/> is greater than <paramref name="valueB"/>.
+        /// </returns>
         public static int Compare(string valueA, string valueB)
         {
             return _Compare(Sanitize(valueA), Sanitize(valueB));
@@ -55,12 +58,14 @@ namespace MeaMod.Utilities.BaseEncoding
 
             value = Abs(value);
 
-            var decoded = 0L;
+            // Accumulate in BigInteger so long.MinValue (whose magnitude does not fit in a long) decodes without
+            // relying on unchecked wrap-around.
+            var decoded = BigInteger.Zero;
 
             for (var i = 0; i < value.Length; ++i)
-                decoded += Digits.IndexOf(value[i]) * (long)BigInteger.Pow(Digits.Length, value.Length - i - 1);
+                decoded = decoded * Digits.Length + Digits.IndexOf(value[i]);
 
-            return negative ? decoded * -1 : decoded;
+            return (long)(negative ? -decoded : decoded);
         }
 
         /// <summary>
@@ -94,34 +99,47 @@ namespace MeaMod.Utilities.BaseEncoding
 
         private static void CheckOverflow(string value)
         {
-            if (_Compare(Min, value) < 0)
+            if (_Compare(value, Min) < 0)
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "Value \"{0}\" would overflow since it's less than long.MinValue.", value));
 
-            if (_Compare(value, Max) < 0)
+            if (_Compare(value, Max) > 0)
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "Value \"{0}\" would overflow since it's greater than long.MaxValue.", value));
         }
 
+        /// <summary>
+        /// Validates the input and returns it in canonical form: upper case, trimmed, no leading zeros,
+        /// and "0" rather than "-0" for zero.
+        /// </summary>
         private static string Sanitize(string value)
         {
             if (value == null)
-                throw new ArgumentNullException("An null string was passed.", (Exception)null);
+                throw new ArgumentNullException(nameof(value), "A null string was passed.");
 
             if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException("An empty string was passed.");
+                throw new ArgumentException("An empty string was passed.", nameof(value));
 
             value = value.Trim().ToUpperInvariant();
 
-            if (Abs(value).Any(c => !Digits.Contains(c)))
-                throw new ArgumentException(
-                    string.Format(CultureInfo.InvariantCulture, "Invalid value: \"{0}\".", value));
+            var negative = value[0] == '-';
+            var magnitude = Abs(value);
 
-            return value;
+            if (magnitude.Length == 0 || magnitude.Any(c => !Digits.Contains(c)))
+                throw new ArgumentException(
+                    string.Format(CultureInfo.InvariantCulture, "Invalid value: \"{0}\".", value), nameof(value));
+
+            magnitude = magnitude.TrimStart('0');
+            if (magnitude.Length == 0)
+                return "0";
+
+            return negative ? "-" + magnitude : magnitude;
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA2201:DoNotRaiseReservedExceptionTypes",
-            Justification = "Exception thrown only if there's a logic error below, the user should never catch it.")]
+        /// <summary>
+        /// Compares two sanitized values. Returns a negative number when <paramref name="valueA"/> is less than
+        /// <paramref name="valueB"/>, zero when equal and a positive number when greater (string.Compare semantics).
+        /// </summary>
         private static int _Compare(string valueA, string valueB)
         {
             if (valueA == valueB)
@@ -130,33 +148,35 @@ namespace MeaMod.Utilities.BaseEncoding
             var negativeA = valueA[0] == '-';
             var negativeB = valueB[0] == '-';
 
-            var bothNegative = negativeA && negativeB;
-
-            if (!bothNegative && negativeA)
-                return 1;
-
-            if (!bothNegative && negativeB)
-                return -1;
+            if (negativeA != negativeB)
+                return negativeA ? -1 : 1;
 
             valueA = Abs(valueA);
             valueB = Abs(valueB);
 
-            if (valueA.Length < valueB.Length)
-                return bothNegative ? -1 : 1;
+            int magnitudeComparison = 0;
 
-            if (valueA.Length > valueB.Length)
-                return bothNegative ? 1 : -1;
-
-            for (var i = 0; i < valueA.Length; ++i)
+            if (valueA.Length != valueB.Length)
             {
-                var digitA = Digits.IndexOf(valueA[i]);
-                var digitB = Digits.IndexOf(valueB[i]);
+                magnitudeComparison = valueA.Length < valueB.Length ? -1 : 1;
+            }
+            else
+            {
+                for (var i = 0; i < valueA.Length; ++i)
+                {
+                    var digitA = Digits.IndexOf(valueA[i]);
+                    var digitB = Digits.IndexOf(valueB[i]);
 
-                if (digitA != digitB)
-                    return (digitA < digitB ? 1 : -1) * (bothNegative ? -1 : 1);
+                    if (digitA != digitB)
+                    {
+                        magnitudeComparison = digitA < digitB ? -1 : 1;
+                        break;
+                    }
+                }
             }
 
-            throw new Exception("Logic error in the library, please contact the library author.");
+            // For negative numbers the larger magnitude is the smaller number.
+            return negativeA ? -magnitudeComparison : magnitudeComparison;
         }
     }
 }

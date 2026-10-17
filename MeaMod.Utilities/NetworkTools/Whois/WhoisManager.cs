@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
@@ -11,6 +11,10 @@ namespace MeaMod.Utilities.NetworkTools.Whois
     {
         private const string DefaultWhoisLookupFormat = "{0}.whois-servers.net";
 
+        private const int WhoisPort = 43;
+
+        private const string WhoisServerMarker = "Whois Server:";
+
         /// <summary>Executes whois for a domain.</summary>
         /// <param name="domain">The domain to lookup.</param>
         /// <exception cref="T:System.ArgumentException"></exception>
@@ -18,7 +22,7 @@ namespace MeaMod.Utilities.NetworkTools.Whois
         public string ExecuteWhoisForDomain(string domain)
         {
             string[] strArray = !string.IsNullOrWhiteSpace(domain) ? domain.Split('.') : throw new ArgumentException("Argument \"domain\" cannot be null or empty.", nameof(domain));
-            string whoisServer = string.Format("{0}.whois-servers.net", (object)strArray[strArray.Length - 1]);
+            string whoisServer = string.Format(DefaultWhoisLookupFormat, (object)strArray[strArray.Length - 1]);
             return this.ExecuteWhoisForDomain(domain, whoisServer);
         }
 
@@ -26,30 +30,43 @@ namespace MeaMod.Utilities.NetworkTools.Whois
         /// <param name="domain">The domain to lookup.</param>
         /// <param name="whoisServer">The whois server to use.</param>
         /// <exception cref="T:System.ArgumentException"></exception>
-        /// <returns>A text string with the whois information.</returns>
+        /// <returns>A text string with the whois information, or an empty string if the server could not be reached.</returns>
         public string ExecuteWhoisForDomain(string domain, string whoisServer)
         {
             if (string.IsNullOrWhiteSpace(domain))
                 throw new ArgumentException("Argument \"domain\" cannot be null or empty.", nameof(domain));
-            IPEndPoint ipEndPoint = !string.IsNullOrWhiteSpace(whoisServer) ? new IPEndPoint(Dns.GetHostEntry(whoisServer).AddressList[0], 43) : throw new ArgumentException("Argument \"whoisServer\" cannot be null or empty.", nameof(whoisServer));
+            if (string.IsNullOrWhiteSpace(whoisServer))
+                throw new ArgumentException("Argument \"whoisServer\" cannot be null or empty.", nameof(whoisServer));
+
             StringBuilder stringBuilder = new StringBuilder();
             try
             {
-                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                // TcpClient.Connect(host, port) tries every resolved address (IPv4 and IPv6) rather than only the
+                // first one, which may be an IPv6 address that an IPv4-only socket cannot connect to.
+                using (TcpClient client = new TcpClient())
                 {
-                    socket.Connect((EndPoint)ipEndPoint);
-                    byte[] bytes = Encoding.ASCII.GetBytes(string.Format("{0}\r\n", (object)domain));
-                    socket.Send(bytes);
-                    byte[] numArray = new byte[1024];
-                    for (int count = socket.Receive(numArray); count > 0; count = socket.Receive(numArray))
-                        stringBuilder.Append(Encoding.ASCII.GetString(numArray, 0, count).Replace("\n", Environment.NewLine));
-                    socket.Shutdown(SocketShutdown.Both);
+                    client.Connect(whoisServer, WhoisPort);
+                    using (NetworkStream stream = client.GetStream())
+                    {
+                        byte[] bytes = Encoding.ASCII.GetBytes(domain + "\r\n");
+                        stream.Write(bytes, 0, bytes.Length);
+
+                        byte[] buffer = new byte[1024];
+                        int count;
+                        while ((count = stream.Read(buffer, 0, buffer.Length)) > 0)
+                            stringBuilder.Append(Encoding.ASCII.GetString(buffer, 0, count));
+                    }
                 }
             }
             catch (SocketException)
             {
             }
-            return stringBuilder.ToString();
+            catch (IOException)
+            {
+            }
+
+            // Normalise line endings without turning a server's CRLF into CR CR LF.
+            return stringBuilder.ToString().Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
         }
 
         /// <summary>
@@ -57,31 +74,28 @@ namespace MeaMod.Utilities.NetworkTools.Whois
         /// </summary>
         /// <param name="whoisOutput">The whois output to search.</param>
         /// <exception cref="T:System.ArgumentException"></exception>
-        /// <returns>A list of all of the found whois servers, or null.</returns>
+        /// <returns>A list of all of the found whois servers, or an empty list.</returns>
         public IEnumerable<string> FindWhoisServerInOutput(string whoisOutput)
         {
             if (string.IsNullOrWhiteSpace(whoisOutput))
                 throw new ArgumentException("Argument \"whoisOutput\" cannot be null or empty.", nameof(whoisOutput));
-            List<string> stringList = new List<string>();
-            if (whoisOutput.Contains("Whois Server: "))
+
+            List<string> servers = new List<string>();
+
+            // Line based: this copes with a match on the first line and with a final line that has no newline.
+            foreach (string rawLine in whoisOutput.Split('\n'))
             {
-                int startIndex1 = 0;
-                while (true)
-                {
-                    int startIndex2 = whoisOutput.IndexOf("Whois Server:", startIndex1);
-                    if (startIndex2 > 0)
-                    {
-                        int num = whoisOutput.IndexOf('\n', startIndex2 + 1);
-                        string[] strArray = whoisOutput.Substring(startIndex2, num - startIndex2).Split(':');
-                        if (strArray.GetUpperBound(0) > 0)
-                            stringList.Add(strArray[1].Trim());
-                        startIndex1 = num + 1;
-                    }
-                    else
-                        break;
-                }
+                string line = rawLine.Trim();
+                int index = line.IndexOf(WhoisServerMarker, StringComparison.OrdinalIgnoreCase);
+                if (index < 0)
+                    continue;
+
+                string server = line.Substring(index + WhoisServerMarker.Length).Trim();
+                if (server.Length > 0)
+                    servers.Add(server);
             }
-            return (IEnumerable<string>)stringList;
+
+            return (IEnumerable<string>)servers;
         }
     }
 }

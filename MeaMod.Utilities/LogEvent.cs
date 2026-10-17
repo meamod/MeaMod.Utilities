@@ -51,7 +51,6 @@ namespace MeaMod.Utilities
             }
             else
             {
-                var objEventLog = new EventLog();
                 try
                 {
                     if (!EventLog.SourceExists(source))
@@ -59,8 +58,10 @@ namespace MeaMod.Utilities
                         EventLog.CreateEventSource(source, logName);
                     }
 
-                    objEventLog.Source = source;
-                    objEventLog.WriteEntry(message, eventType, eventID);
+                    using (var objEventLog = new EventLog { Source = source })
+                    {
+                        objEventLog.WriteEntry(message, eventType, eventID);
+                    }
                 }
                 catch (Exception)
                 {
@@ -124,10 +125,12 @@ namespace MeaMod.Utilities
         {
             if (EventLog.SourceExists(source))
             {
-                var evLog = new EventLog() { Source = source };
-                if ((evLog.Log ?? "") != (logName ?? ""))
+                using (var evLog = new EventLog() { Source = source })
                 {
-                    EventLog.DeleteEventSource(source);
+                    if ((evLog.Log ?? "") != (logName ?? ""))
+                    {
+                        EventLog.DeleteEventSource(source);
+                    }
                 }
             }
 
@@ -140,11 +143,14 @@ namespace MeaMod.Utilities
             var eventLogs = EventLog.GetEventLogs();
             foreach (var e in eventLogs)
             {
-                if ((e.Log ?? "") == (logName ?? ""))
+                using (e)
                 {
-                    if (e.MaximumKilobytes < 1048576L)
+                    if ((e.Log ?? "") == (logName ?? ""))
                     {
-                        e.MaximumKilobytes = 1048576L;
+                        if (e.MaximumKilobytes < 1048576L)
+                        {
+                            e.MaximumKilobytes = 1048576L;
+                        }
                     }
                 }
             }

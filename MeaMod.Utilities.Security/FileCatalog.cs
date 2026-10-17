@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 #if !UNIX
@@ -394,13 +394,13 @@ namespace MeaMod.Utilities.Security
                             continue;
 
                         ProcessPathFile(new FileInfo(fileItem), new DirectoryInfo(folderPath), hashAlgorithm, ref fileHashes);
-                        catalogProgress.Report(new CatalogProgress("Calculating Hashes",directoryItems.Count(), countDirectoryItems, new FileInfo(fileItem).Name,hashAlgorithm));
+                        catalogProgress?.Report(new CatalogProgress("Calculating Hashes",directoryItems.Count(), countDirectoryItems, new FileInfo(fileItem).Name,hashAlgorithm));
                     }
                 }
                 else if (File.Exists(folderPath))
                 {
                     ProcessPathFile(new FileInfo(folderPath), null, hashAlgorithm, ref fileHashes);
-                    catalogProgress.Report(new CatalogProgress("Calculating Hashes",folderPaths.Count(), count, new FileInfo(folderPath).Name,hashAlgorithm));
+                    catalogProgress?.Report(new CatalogProgress("Calculating Hashes",folderPaths.Count(), count, new FileInfo(folderPath).Name,hashAlgorithm));
                 }
 
                 
@@ -434,7 +434,7 @@ namespace MeaMod.Utilities.Security
             if (relativePathsNotInFolder.Count != 0 || relativePathsNotInCatalog.Count != 0)
             {
                 Status = false;
-                catalogProgress.Report(new CatalogProgress("Comparing Files",relativePathsFromCatalog.Count, relativePathsFromFolder.Count, "Count Mismatch",""));
+                catalogProgress?.Report(new CatalogProgress("Comparing Files",relativePathsFromCatalog.Count, relativePathsFromFolder.Count, "Count Mismatch",""));
 
             }
 
@@ -455,7 +455,7 @@ namespace MeaMod.Utilities.Security
                         Status = false;
                     }
                 }
-                catalogProgress.Report(new CatalogProgress("Comparing Files",relativePathsFromCatalog.Count, count, catalogHashValue,""));
+                catalogProgress?.Report(new CatalogProgress("Comparing Files",relativePathsFromCatalog.Count, count, catalogHashValue,""));
             }
 
             return Status;

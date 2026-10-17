@@ -7,62 +7,80 @@ namespace MeaMod.Utilities
     {
         public static string GetHardwareID()
         {
+#pragma warning disable CS0618 // Hash is obsolete but the output format must stay stable
             return Cryptography.Hash.SHA256(GetProcessorId() + GetMotherboardID() + GetDiskVolumeSerialNumber()).ToUpperInvariant();
+#pragma warning restore CS0618
         }
 
         // Get processor ID
         public static string GetProcessorId()
         {
-            string strProcessorID = string.Empty;
-            var query = new SelectQuery("Win32_processor");
-            var search = new ManagementObjectSearcher(query);
-            foreach (ManagementObject info in search.Get())
-                strProcessorID = info["processorID"].ToString();
-            return strProcessorID;
+            return GetFirstPropertyValue("Win32_Processor", "ProcessorId");
         }
+
         // Get MAC Address
         public static string GetMACAddress()
         {
-            var mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
-            var moc = mc.GetInstances();
-            string MacAddress = string.Empty;
-            foreach (ManagementObject mo in moc)
+            string macAddress = string.Empty;
+            using (var mc = new ManagementClass("Win32_NetworkAdapterConfiguration"))
+            using (var moc = mc.GetInstances())
             {
-                if (MacAddress.Equals(string.Empty))
+                foreach (ManagementObject mo in moc)
                 {
-                    if (bool.Parse((string)mo["IPEnabled"]))
-                        MacAddress = mo["MacAddress"].ToString();
-                    mo.Dispose();
-                }
+                    using (mo)
+                    {
+                        if (!string.IsNullOrEmpty(macAddress))
+                            continue;
 
-                MacAddress = MacAddress.Replace(":", string.Empty);
+                        // IPEnabled is a WMI boolean, not a string
+                        if (mo["IPEnabled"] is bool ipEnabled && ipEnabled && mo["MacAddress"] is string mac)
+                            macAddress = mac.Replace(":", string.Empty);
+                    }
+                }
             }
 
-            return MacAddress;
+            return macAddress;
         }
 
         public static string GetDiskVolumeSerialNumber()
         {
             try
             {
-                var _disk = new ManagementObject("Win32_LogicalDisk.deviceid=\"" + Environment.GetEnvironmentVariable("SystemDrive") + "\"");
-                _disk.Get();
-                return _disk["VolumeSerialNumber"].ToString();
+                using (var disk = new ManagementObject("Win32_LogicalDisk.DeviceID=\"" + Environment.GetEnvironmentVariable("SystemDrive") + "\""))
+                {
+                    disk.Get();
+                    return disk["VolumeSerialNumber"]?.ToString() ?? string.Empty;
+                }
             }
             catch
             {
                 return string.Empty;
             }
         }
+
         // Get Motherboard ID
         public static string GetMotherboardID()
         {
-            string strMotherboardID = string.Empty;
-            var query = new SelectQuery("Win32_BaseBoard");
-            var search = new ManagementObjectSearcher(query);
-            foreach (ManagementObject info in search.Get())
-                strMotherboardID = info["SerialNumber"].ToString();
-            return strMotherboardID;
+            return GetFirstPropertyValue("Win32_BaseBoard", "SerialNumber");
+        }
+
+        private static string GetFirstPropertyValue(string wmiClass, string propertyName)
+        {
+            string value = string.Empty;
+            using (var search = new ManagementObjectSearcher(new SelectQuery(wmiClass)))
+            using (var results = search.Get())
+            {
+                foreach (ManagementObject info in results)
+                {
+                    using (info)
+                    {
+                        // Some (virtual) machines report a null value here
+                        value = info[propertyName]?.ToString() ?? string.Empty;
+                    }
+                }
+            }
+
+            return value;
         }
     }
 }

@@ -8,8 +8,8 @@ namespace MeaMod.Utilities.UI.WinForms
 {
     /// <summary>
     /// CircularProgressControl
-    /// <para><see href="https://www.codeproject.com/Articles/39235/Circular-Progress-Control-Mac-OS-X-style"/></para> 
-    /// <para>Licence: CPOL 1.02</para> 
+    /// <para><see href="https://www.codeproject.com/Articles/39235/Circular-Progress-Control-Mac-OS-X-style"/></para>
+    /// <para>Licence: CPOL 1.02</para>
     /// </summary>
     public partial class CircularProgressControl : UserControl
     {
@@ -66,7 +66,8 @@ namespace MeaMod.Utilities.UI.WinForms
         float m_StartAngle = 0;
         float m_AngleIncrement = 0;
         Direction m_Rotation;
-        System.Timers.Timer m_Timer = null;
+        // A WinForms timer ticks on the UI thread, so the angle and Invalidate() are never touched cross-thread.
+        System.Windows.Forms.Timer m_Timer = null;
         List<Spoke> m_Spokes = null;
 
         #endregion
@@ -76,7 +77,7 @@ namespace MeaMod.Utilities.UI.WinForms
         /// <summary>
         /// Time interval for each tick.
         /// </summary>
-        [DefaultValue(10)]
+        [DefaultValue(DEFAULT_INTERVAL)]
         public int Interval
         {
             get
@@ -157,7 +158,7 @@ namespace MeaMod.Utilities.UI.WinForms
             this.StartAngle = 270;
             // Default number of Spokes in this control is 12
             m_SpokesCount = 12;
-            // Set the Lower limit of the Alpha value (The spokes will be shown in 
+            // Set the Lower limit of the Alpha value (The spokes will be shown in
             // alpha values ranging from 255 to m_AlphaLowerLimit)
             m_AlphaLowerLimit = 15;
 
@@ -172,8 +173,10 @@ namespace MeaMod.Utilities.UI.WinForms
             // Calculate the Spoke Points
             CalculateSpokesPoints();
 
-            m_Timer = new System.Timers.Timer(this.Interval);
-            m_Timer.Elapsed += new System.Timers.ElapsedEventHandler(OnTimerElapsed);
+            // Owned by the designer container so it is stopped and disposed together with the control.
+            m_Timer = new System.Windows.Forms.Timer(components);
+            m_Timer.Interval = this.Interval;
+            m_Timer.Tick += new EventHandler(OnTimerTick);
         }
 
         /// <summary>
@@ -181,6 +184,10 @@ namespace MeaMod.Utilities.UI.WinForms
         /// </summary>
         private void CalculateSpokesPoints()
         {
+            // Can be reached from OnClientSizeChanged before the constructor has finished initialising.
+            if (m_Pen == null || m_SpokesCount == 0)
+                return;
+
             m_Spokes = new List<Spoke>();
 
             // Calculate the angle between adjacent spokes
@@ -237,6 +244,8 @@ namespace MeaMod.Utilities.UI.WinForms
         /// <param name="e">EventArgs</param>
         protected override void OnClientSizeChanged(EventArgs e)
         {
+            // Without the base call the public ClientSizeChanged event never fires.
+            base.OnClientSizeChanged(e);
             CalculateSpokesPoints();
         }
 
@@ -244,8 +253,8 @@ namespace MeaMod.Utilities.UI.WinForms
         /// Handle the Tick event
         /// </summary>
         /// <param name="sender">Timer</param>
-        /// <param name="e">ElapsedEventArgs</param>
-        void OnTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        /// <param name="e">EventArgs</param>
+        void OnTimerTick(object sender, EventArgs e)
         {
             if (Rotation == Direction.CLOCKWISE)
             {
@@ -272,6 +281,12 @@ namespace MeaMod.Utilities.UI.WinForms
         /// <param name="e">PaintEventArgs</param>
         protected override void OnPaint(PaintEventArgs e)
         {
+            // Without the base call the public Paint event never fires.
+            base.OnPaint(e);
+
+            if (m_Spokes == null || m_Pen == null)
+                return;
+
             e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 

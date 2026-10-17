@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace MeaMod.Utilities
 {
@@ -10,31 +8,30 @@ namespace MeaMod.Utilities
     /// </summary>
     public class RandomExtensions : Random
     {
+        // NextDouble() carries at most 53 bits of precision.
+        private const int FractionBits = 53;
+
         /// <summary>
         /// Create Random BigInteger with range
         /// </summary>
         /// <param name="min">Lower Limit</param>
         /// <param name="max">Upper Limit</param>
-        /// <returns></returns>
+        /// <returns>A value in the range <paramref name="min"/> to <paramref name="max"/>.</returns>
         public BigInteger CreateRandomInRange(BigInteger min, BigInteger max)
         {
-            string numeratorString, denominatorString;
             double fraction = this.NextDouble();
-            BigInteger inRange;
 
-            //Maintain all 17 digits of precision, 
-            //but remove the leading zero and the decimal point;
-            numeratorString = fraction.ToString("G17").Remove(0, 2);
+            // Guard against a subclass returning something outside [0, 1).
+            if (fraction < 0d) fraction = 0d;
+            if (fraction > 1d) fraction = 1d;
 
-            //Use the length instead of 17 in case the random
-            //fraction ends with one or more zeros
-            denominatorString = string.Format("1E{0}", numeratorString.Length);
+            // Scale the fraction to an integer numerator over 2^53. This keeps all of the precision
+            // NextDouble() provides and avoids formatting the double as a string, which switches to
+            // scientific notation for very small values and is culture dependent.
+            var numerator = new BigInteger((long)(fraction * (1L << FractionBits)));
+            var denominator = BigInteger.One << FractionBits;
 
-            inRange = (max - min) * BigInteger.Parse(numeratorString) /
-               BigInteger.Parse(denominatorString,
-               System.Globalization.NumberStyles.AllowExponent)
-               + min;
-            return inRange;
+            return (max - min) * numerator / denominator + min;
         }
     }
 }

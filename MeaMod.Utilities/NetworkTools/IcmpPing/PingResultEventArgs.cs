@@ -8,7 +8,8 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
         public PingResultEventArgs(PingReply reply, Exception exception)
         {
             this.Reply = reply;
-            this.Success = reply != null;
+            // A reply with a non-success status (e.g. TimedOut) is not a successful ping.
+            this.Success = reply != null && reply.Status == IPStatus.Success;
             this.LastException = exception;
         }
 
@@ -20,12 +21,22 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
 
         public override string ToString()
         {
-            string str;
             if (this.Success)
-                str = string.Format("Reply from {0}: bytes={1} time={2}ms TTL={3}", (object)this.Reply.Address, (object)this.Reply.Buffer.Length, (object)this.Reply.RoundtripTime, (object)(this.Reply.Options != null ? this.Reply.Options.Ttl : 0));
-            else
-                str = this.LastException.InnerException.Message;
-            return str;
+            {
+                return string.Format("Reply from {0}: bytes={1} time={2}ms TTL={3}",
+                    this.Reply.Address,
+                    this.Reply.Buffer?.Length ?? 0,
+                    this.Reply.RoundtripTime,
+                    this.Reply.Options?.Ttl ?? 0);
+            }
+
+            if (this.Reply != null)
+                return string.Format("Request to {0} failed: {1}", this.Reply.Address, this.Reply.Status);
+
+            // SocketException has no inner exception; PingException usually does.
+            return this.LastException?.InnerException?.Message
+                   ?? this.LastException?.Message
+                   ?? "Ping failed for an unknown reason.";
         }
     }
 }

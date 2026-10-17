@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace MeaMod.Utilities
 {
 	/// <summary>
-	/// AuthenticodeTools class. 
+	/// AuthenticodeTools class.
 	/// <para><see href="http://stackoverflow.com/a/6597017/1837988"/></para>
 	/// <para>Licence: CC BY-SA 3.0</para>
 	/// </summary>
@@ -23,16 +23,18 @@ namespace MeaMod.Utilities
 				AllocMethod.HGlobal))
 			using (var wvtDataPtr = new UnmanagedPointer(Marshal.AllocHGlobal(Marshal.SizeOf(typeof(WINTRUST_DATA))),
 				AllocMethod.HGlobal))
+			// WINTRUST_DATA owns an unmanaged copy of fileInfo; it must be disposed or that copy leaks on every call.
+			using (var data = new WINTRUST_DATA(fileInfo))
 			{
-				var data = new WINTRUST_DATA(fileInfo);
 				IntPtr pGuid = guidPtr;
 				IntPtr pData = wvtDataPtr;
+				// fDeleteOld must be false: the destination buffers are freshly allocated and hold no marshalled data yet.
 				Marshal.StructureToPtr(wintrust_action_generic_verify_v2,
 					pGuid,
-					true);
+					false);
 				Marshal.StructureToPtr(data,
 					pData,
-					true);
+					false);
 				result = WinVerifyTrust(IntPtr.Zero,
 					pGuid,
 					pData);
@@ -49,6 +51,7 @@ namespace MeaMod.Utilities
 		}
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
 	internal struct WINTRUST_FILE_INFO : IDisposable
 	{
 		public WINTRUST_FILE_INFO(string fileName, Guid subject)
@@ -62,7 +65,7 @@ namespace MeaMod.Utilities
 			{
 				pgKnownSubject = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(Guid)));
 
-				Marshal.StructureToPtr(subject, pgKnownSubject, true);
+				Marshal.StructureToPtr(subject, pgKnownSubject, false);
 			}
 
 			else
@@ -96,6 +99,8 @@ namespace MeaMod.Utilities
 				Marshal.DestroyStructure(pgKnownSubject, typeof(Guid));
 
 				Marshal.FreeHGlobal(pgKnownSubject);
+
+				pgKnownSubject = IntPtr.Zero;
 			}
 		}
 
@@ -170,6 +175,7 @@ namespace MeaMod.Utilities
 
 			pInfoStruct = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(WINTRUST_FILE_INFO)));
 
+			// This marshals a copy of the file path string into unmanaged memory; Dispose releases it.
 			Marshal.StructureToPtr(fileInfo, pInfoStruct, false);
 
 			dwUnionChoice = UnionChoice.File;
@@ -231,19 +237,18 @@ namespace MeaMod.Utilities
 
 		private void Dispose(bool disposing)
 		{
+			if (pInfoStruct == IntPtr.Zero)
+				return;
+
 			if (dwUnionChoice == UnionChoice.File)
 			{
-				var info = new WINTRUST_FILE_INFO();
-
-				Marshal.PtrToStructure(pInfoStruct, info);
-
-				info.Dispose();
-
+				// Frees the unmanaged string allocated by StructureToPtr for pcwszFilePath.
 				Marshal.DestroyStructure(pInfoStruct, typeof(WINTRUST_FILE_INFO));
 			}
 
-
 			Marshal.FreeHGlobal(pInfoStruct);
+
+			pInfoStruct = IntPtr.Zero;
 		}
 
 		#endregion

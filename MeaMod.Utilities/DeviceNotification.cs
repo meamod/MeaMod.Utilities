@@ -130,6 +130,10 @@ namespace MeaMod.Utilities
 
         private static bool IsDeviceOfClass(IntPtr lParam, Guid classGuid)
         {
+            // Some WM_DEVICECHANGE events (e.g. DBT_DEVNODES_CHANGED) carry no structure at all.
+            if (lParam == IntPtr.Zero)
+                return false;
+
             DevBroadcastHdr hdr = (DevBroadcastHdr)Marshal.PtrToStructure(lParam, typeof(DevBroadcastHdr));
 
             if (hdr.DeviceType != DbtDeviceTypeDeviceInterface)

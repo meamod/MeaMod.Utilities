@@ -33,6 +33,7 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
         /// <summary>Starts the port scan.</summary>
         /// <param name="startingPortNumber">The port number to inclusively start scanning. (e.g. 1)</param>
         /// <param name="endingPortNumber">The port number to inclusively stop scanning. (e.g. 65535)</param>
+        /// <param name="typesToScan">The protocols to scan.</param>
         /// <exception cref="T:System.ArgumentOutOfRangeException"></exception>
         public void Start(int startingPortNumber, int endingPortNumber, PortTypes typesToScan)
         {
@@ -40,19 +41,30 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
                 throw new ArgumentOutOfRangeException(nameof(startingPortNumber), "Argument \"startingPortNumber\" must be greater than zero.");
             if (endingPortNumber > (int)ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(endingPortNumber), "Argument \"endingPortNumber\" must be less than 65535.");
+            if (endingPortNumber < startingPortNumber)
+                throw new ArgumentOutOfRangeException(nameof(endingPortNumber), "Argument \"endingPortNumber\" must not be less than \"startingPortNumber\".");
+
+            // A cancelled token source can never be reset, so a scan started after Stop() needs a fresh one.
+            if (this.CurrentCancellationTokenSource.IsCancellationRequested)
+            {
+                this.CurrentCancellationTokenSource = new CancellationTokenSource();
+                this._tasks.RemoveAll(t => t.IsCompleted);
+            }
+
+            CancellationToken token = this.CurrentCancellationTokenSource.Token;
             for (int port = startingPortNumber; port <= endingPortNumber; ++port)
             {
-                if (this.CurrentCancellationTokenSource.IsCancellationRequested)
+                if (token.IsCancellationRequested)
                     break;
                 PortScanner scanner = new PortScanner(this.EndPoint, port);
                 scanner.PortScanResult += new EventHandler<PortScanResultEventArgs>(this.scanner_PortScanResult);
                 switch (typesToScan)
                 {
                     case PortTypes.Udp:
-                        this._tasks.Add(Task.Factory.StartNew((Action)(() => scanner.AttemptUdpConnectionToPort()), this.CurrentCancellationTokenSource.Token));
+                        this._tasks.Add(Task.Factory.StartNew((Action)(() => scanner.AttemptUdpConnectionToPort()), token));
                         break;
                     case PortTypes.Tcp:
-                        this._tasks.Add(Task.Factory.StartNew((Action)(() => scanner.AttemptTcpConnectionToPort()), this.CurrentCancellationTokenSource.Token));
+                        this._tasks.Add(Task.Factory.StartNew((Action)(() => scanner.AttemptTcpConnectionToPort()), token));
                         break;
                 }
             }
@@ -66,9 +78,7 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
 
         private void scanner_PortScanResult(object sender, PortScanResultEventArgs e)
         {
-            if (this.PortScanResult == null)
-                return;
-            this.PortScanResult((object)this, e);
+            this.PortScanResult?.Invoke(this, e);
         }
     }
 }
