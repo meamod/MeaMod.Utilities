@@ -117,7 +117,7 @@ namespace MeaMod.Utilities.Security
         /// </summary>
         /// <param name="catalogVersion">Path of the output catalog file.</param>
         /// <returns>Version of the catalog.</returns>
-        private static string GetCatalogHashAlgorithm(int catalogVersion)
+        internal static string GetCatalogHashAlgorithm(int catalogVersion)
         {
             string hashAlgorithm;
 

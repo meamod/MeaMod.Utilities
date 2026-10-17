@@ -14,11 +14,11 @@ namespace MeaMod.Utilities.NetworkTools.TraceRoute
         /// <summary>The highest TTL probed before giving up.</summary>
         private const int MaxHops = 30;
 
-        /// <summary>Per-probe timeout in milliseconds.</summary>
-        private const int ProbeTimeoutMilliseconds = 5000;
-
         /// <summary>Creates a new instance of this type.</summary>
         public TraceRouteManager() => this.CurrentCancellationTokenSource = new CancellationTokenSource();
+
+        /// <summary>How long each probe waits for a reply, in milliseconds. Defaults to 5000.</summary>
+        public int ProbeTimeoutMilliseconds { get; set; } = 5000;
 
         /// <summary>Event for when a trace route node is found.</summary>
         public event EventHandler<TraceRouteNodeFoundEventArgs> TraceRouteNodeFound;

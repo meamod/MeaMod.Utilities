@@ -41,6 +41,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="MeaMod.Utilities.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Resources\FileCatalogStrings.Designer.cs">
       <DependentUpon>FileCatalogStrings.resx</DependentUpon>
       <DesignTime>True</DesignTime>

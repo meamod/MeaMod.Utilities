@@ -13,9 +13,9 @@ namespace MeaMod.Utilities.Tests
         public void ValidateAcceptsANullProgressCallback()
         {
             // The progress callback used to be dereferenced without a null check.
-            var paths = new Collection<string> { Path.Combine(TestFiles, "vlc") };
+            var paths = new Collection<string> { Fixtures.Require("vlc") };
 
-            CatalogInformation info = FileCatalog.Validate(paths, Path.Combine(TestFiles, "vlc_valid.cat"), null!);
+            CatalogInformation info = FileCatalog.Validate(paths, Fixtures.Require("vlc_valid.cat"), null!);
 
             Assert.IsNotNull(info);
             Assert.AreEqual(CatalogValidationStatus.Valid, info.Status);

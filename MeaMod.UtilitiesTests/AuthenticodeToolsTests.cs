@@ -38,14 +38,15 @@ namespace MeaMod.Utilities.Tests
         public void RepeatedCallsDoNotLeakUnmanagedMemory()
         {
             // Before the fix every call leaked the WINTRUST_FILE_INFO block plus the marshalled path string:
-            // roughly 11 MB over 20,000 calls. The threshold leaves headroom for normal heap growth.
-            const int iterations = 20_000;
-            const long allowedGrowthBytes = 4L * 1024 * 1024;
+            // roughly 5.5 MB per 10,000 calls. A full first round absorbs one-off growth (JIT, OS caches,
+            // coverage instrumentation); the second round must then stay flat.
+            const int iterations = 10_000;
+            const long allowedGrowthBytes = 2L * 1024 * 1024;
 
             string path = CreateUnsignedFile();
             try
             {
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < iterations; i++)
                     AuthenticodeTools.IsTrusted(path);
 
                 long before = PrivateBytes();

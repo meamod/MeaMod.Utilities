@@ -366,3 +366,6 @@ MeaMod.Utilities.Documentation/Help/
 MeaMod.Utilities.Documentation/Help
 /MeaMod.UtilitiesTests/testfiles/vlc
 /MeaMod.UtilitiesTests/testfiles
+
+# Test and coverage output
+[Tt]est[Rr]esult*/

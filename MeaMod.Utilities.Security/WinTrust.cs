@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using System;
@@ -23,15 +23,6 @@ internal class SafeCATHandle : SafeHandle
     public override bool IsInvalid => handle == (IntPtr)(-1);
 
     protected override bool ReleaseHandle() => WinTrustMethods.CryptCATClose(handle);
-}
-
-internal class SafeCATCDFHandle : SafeHandle
-{
-    internal SafeCATCDFHandle() : base(IntPtr.Zero, true) { }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    protected override bool ReleaseHandle() => WinTrustMethods.CryptCATCDFClose(handle);
 }
 
 [Flags]
@@ -262,12 +253,6 @@ internal static class WinTrustMethods
         uint dwFlags
     );
 
-    [DllImport(WinTrustDll)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool CryptCATCDFClose(
-        IntPtr pCDF
-    );
-
     [DllImport(WinTrustDll, CharSet = CharSet.Unicode)]
     internal static extern IntPtr CryptCATEnumerateCatAttr(
         SafeCATHandle hCatalog,
@@ -384,15 +369,4 @@ internal static class WinTrustMethods
 
         return data;
     }
-
-    /// <summary>
-    /// Signature of call back function used by CryptCATCDFOpen,
-    /// CryptCATCDFEnumCatAttributes, CryptCATCDFEnumAttributesWithCDFTag, and
-    /// and CryptCATCDFEnumMembersByCDFTagEx.
-    /// </summary>
-    internal delegate void CryptCATCDFParseErrorCallBack(
-        uint dwErrorArea,
-        uint dwLocalArea,
-        [MarshalAs(UnmanagedType.LPWStr)] string pwszLine
-    );
 }

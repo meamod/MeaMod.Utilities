@@ -106,5 +106,9 @@
 		<None Include="..\images\MeaMod-Utilities.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="MeaMod.Utilities.Tests" />
+	</ItemGroup>
+
 </Project>
  

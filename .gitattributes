@@ -61,3 +61,7 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Catalog and signature test fixtures are hashed byte-for-byte; never normalise their line endings.
+MeaMod.UtilitiesTests/testfiles/zerofile/** -text
+MeaMod.UtilitiesTests/testfiles/selfsigned_notimestamp.ps1 -text
