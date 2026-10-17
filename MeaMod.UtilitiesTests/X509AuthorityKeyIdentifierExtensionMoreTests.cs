@@ -5,6 +5,7 @@ using MmAuthorityKeyIdentifier = MeaMod.Utilities.Cryptography.X509AuthorityKeyI
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class X509AuthorityKeyIdentifierExtensionMoreTests
     {
         private static X509Certificate2 CreateWithRawSubjectKeyIdentifier(byte[] rawData)
@@ -19,7 +20,7 @@ namespace MeaMod.Utilities.Tests
         public void MalformedSubjectKeyIdentifierIsRejected()
         {
             // An ASN.1 NULL rather than an OCTET STRING.
-            using var certificate = CreateWithRawSubjectKeyIdentifier(new byte[] { 0x05, 0x00 });
+            using var certificate = CreateWithRawSubjectKeyIdentifier([0x05, 0x00]);
 
             Assert.ThrowsExactly<ArgumentException>(() => new MmAuthorityKeyIdentifier(certificate, false));
         }
@@ -44,7 +45,7 @@ namespace MeaMod.Utilities.Tests
 
             var extension = new MmAuthorityKeyIdentifier(certificate, true);
 
-            CollectionAssert.AreEqual(new byte[] { 0x30, 0x06, 0x80, 0x04, 0xDE, 0xAD, 0xBE, 0xEF }, extension.RawData);
+            Assert.AreSequenceEqual(new byte[] { 0x30, 0x06, 0x80, 0x04, 0xDE, 0xAD, 0xBE, 0xEF }, extension.RawData);
             Assert.IsTrue(extension.Critical);
         }
     }

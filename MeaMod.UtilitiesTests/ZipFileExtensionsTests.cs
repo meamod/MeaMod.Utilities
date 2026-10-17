@@ -4,6 +4,7 @@ using MeaMod.Utilities.Zip;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class ZipFileExtensionsTests
     {
         private string _root = string.Empty;
@@ -78,7 +79,7 @@ namespace MeaMod.Utilities.Tests
 
             Assert.AreEqual("A", File.ReadAllText(Path.Combine(destination, "a.txt")));
             Assert.AreEqual("B", File.ReadAllText(Path.Combine(destination, "sub", "b.txt")));
-            Assert.AreEqual(2, reported.Count);
+            Assert.HasCount(2, reported);
             Assert.AreEqual(2, reported[1].Total);
             Assert.AreEqual(2, reported[1].Processed);
             Assert.AreEqual("sub/b.txt", reported[1].CurrentItem);

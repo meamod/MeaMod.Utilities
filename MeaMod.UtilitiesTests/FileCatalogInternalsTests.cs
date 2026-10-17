@@ -6,6 +6,7 @@ using MeaMod.Utilities.Security;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class FileCatalogInternalsTests
     {
         private static readonly string TestFiles = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", "testfiles");
@@ -46,7 +47,7 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void CalculateFileHashMatchesThePlainHashForFlatFiles()
         {
-            byte[] content = Enumerable.Range(0, 1000).Select(i => (byte)(i * 7)).ToArray();
+            byte[] content = [.. Enumerable.Range(0, 1000).Select(i => (byte)(i * 7))];
             string path = CreateFile("flat.bin", content);
 
             Assert.AreEqual(Convert.ToHexString(SHA256.HashData(content)), FileCatalog.CalculateFileHash(path, "SHA256"));
@@ -56,7 +57,7 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void CalculateFileHashRejectsAnUnknownAlgorithm()
         {
-            string path = CreateFile("flat.bin", new byte[] { 1, 2, 3 });
+            string path = CreateFile("flat.bin", [1, 2, 3]);
 
             Assert.ThrowsExactly<InvalidOperationException>(() => FileCatalog.CalculateFileHash(path, "NOPE"));
         }
@@ -72,12 +73,12 @@ namespace MeaMod.Utilities.Tests
         {
             // CryptCATOpen treats unparseable content as an empty catalog rather than failing, so validation
             // against it can never succeed.
-            string path = CreateFile("not-a-catalog.cat", new byte[] { 1, 2, 3, 4 });
+            string path = CreateFile("not-a-catalog.cat", [1, 2, 3, 4]);
 
             Dictionary<string, string> hashes = FileCatalog.GetHashesFromCatalog(path, out _);
-            Assert.AreEqual(0, hashes.Count);
+            Assert.IsEmpty(hashes);
 
-            CatalogInformation info = FileCatalog.Validate(new Collection<string> { VlcFolder }, path, null!);
+            CatalogInformation info = FileCatalog.Validate([VlcFolder], path, null!);
             Assert.AreEqual(CatalogValidationStatus.ValidationFailed, info.Status);
         }
 
@@ -89,13 +90,13 @@ namespace MeaMod.Utilities.Tests
             Dictionary<string, string> hashes = FileCatalog.GetHashesFromCatalog(ValidCatalog, out int version);
 
             Assert.IsTrue(version == 1 || version == 2, version.ToString());
-            Assert.IsTrue(hashes.Count > 0);
+            Assert.IsNotEmpty(hashes);
         }
 
         [TestMethod]
         public void ProcessPathFileRejectsDuplicateRelativePaths()
         {
-            string path = CreateFile("dup.bin", new byte[] { 1 });
+            string path = CreateFile("dup.bin", [1]);
             var hashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             FileCatalog.ProcessPathFile(new FileInfo(path), null!, "SHA256", ref hashes);
@@ -106,7 +107,7 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void ProcessPathFileRecordsAnEmptyHashForAnEmptyFile()
         {
-            string path = CreateFile("empty.bin", Array.Empty<byte>());
+            string path = CreateFile("empty.bin", []);
             var hashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             FileCatalog.ProcessPathFile(new FileInfo(path), new DirectoryInfo(_root), "SHA256", ref hashes);
@@ -132,9 +133,9 @@ namespace MeaMod.Utilities.Tests
             Fixtures.Require("vlc_valid.cat");
             string file = Directory.EnumerateFiles(VlcFolder, "*", SearchOption.AllDirectories).First();
 
-            CatalogInformation info = FileCatalog.Validate(new Collection<string> { file }, ValidCatalog, null!);
+            CatalogInformation info = FileCatalog.Validate([file], ValidCatalog, null!);
 
-            Assert.AreEqual(1, info.PathItems.Count);
+            Assert.HasCount(1, info.PathItems);
             Assert.IsTrue(info.PathItems.ContainsKey(Path.GetFileName(file)));
             Assert.AreEqual(CatalogValidationStatus.ValidationFailed, info.Status);
         }
@@ -144,7 +145,7 @@ namespace MeaMod.Utilities.Tests
         {
             // testfiles contains the catalog being validated; it must not be hashed as part of the folder.
             Fixtures.Require("vlc_valid.cat");
-            CatalogInformation info = FileCatalog.Validate(new Collection<string> { TestFiles }, ValidCatalog, null!);
+            CatalogInformation info = FileCatalog.Validate([TestFiles], ValidCatalog, null!);
 
             Assert.IsFalse(info.PathItems.ContainsKey(Path.GetFileName(ValidCatalog)));
             Assert.AreEqual(CatalogValidationStatus.ValidationFailed, info.Status);
@@ -153,16 +154,16 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void ValidateWithAMissingCatalogThrows()
         {
-            Assert.ThrowsExactly<InvalidOperationException>(() => FileCatalog.Validate(new Collection<string> { VlcFolder }, Path.Combine(_root, "missing.cat"), null!));
+            Assert.ThrowsExactly<InvalidOperationException>(() => FileCatalog.Validate([VlcFolder], Path.Combine(_root, "missing.cat"), null!));
         }
 
         [TestMethod]
         public void ValidateIgnoresPathsThatDoNotExist()
         {
             Fixtures.Require("vlc_valid.cat");
-            CatalogInformation info = FileCatalog.Validate(new Collection<string> { Path.Combine(_root, "nothing-here") }, ValidCatalog, null!);
+            CatalogInformation info = FileCatalog.Validate([Path.Combine(_root, "nothing-here")], ValidCatalog, null!);
 
-            Assert.AreEqual(0, info.PathItems.Count);
+            Assert.IsEmpty(info.PathItems);
             Assert.AreEqual(CatalogValidationStatus.ValidationFailed, info.Status);
         }
     }

@@ -6,7 +6,7 @@
     /// <para>Licence: GPLv3</para>
     /// </summary>
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-        class NamespaceGroupDoc
-        {
-        }
+    class NamespaceGroupDoc
+    {
+    }
 }

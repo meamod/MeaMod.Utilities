@@ -8,7 +8,7 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
     /// <summary>Class for managing a port scan.</summary>
     public class PortScanManager : IPortScanManager, INetworkManager
     {
-        private readonly List<Task> _tasks = new List<Task>();
+        private readonly List<Task> _tasks = [];
 
         /// <summary>Creates a new instance of this type.</summary>
         /// <param name="endPointToScan">The hostname or IP address to scan.</param>
@@ -56,8 +56,8 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
             {
                 if (token.IsCancellationRequested)
                     break;
-                PortScanner scanner = new PortScanner(this.EndPoint, port);
-                scanner.PortScanResult += new EventHandler<PortScanResultEventArgs>(this.scanner_PortScanResult);
+                PortScanner scanner = new(this.EndPoint, port);
+                scanner.PortScanResult += new EventHandler<PortScanResultEventArgs>(this.OnScannerPortScanResult);
                 switch (typesToScan)
                 {
                     case PortTypes.Udp:
@@ -76,7 +76,7 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
         /// <summary>Gets or sets the currently running tasks.</summary>
         public IEnumerable<Task> Tasks => (IEnumerable<Task>)this._tasks;
 
-        private void scanner_PortScanResult(object sender, PortScanResultEventArgs e)
+        private void OnScannerPortScanResult(object sender, PortScanResultEventArgs e)
         {
             this.PortScanResult?.Invoke(this, e);
         }

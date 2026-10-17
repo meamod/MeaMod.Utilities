@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using System;
@@ -16,7 +16,7 @@ namespace MeaMod.Utilities.Security
         // -------------------------------------------------------------------
         // crypt32.dll stuff
         //
-        
+
         [StructLayout(LayoutKind.Sequential)]
         internal struct CRYPT_PROVIDER_CERT
         {

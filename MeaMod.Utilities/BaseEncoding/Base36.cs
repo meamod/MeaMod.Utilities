@@ -25,7 +25,7 @@ namespace MeaMod.Utilities.BaseEncoding
         public static bool WouldOverflow(string value)
         {
             value = Sanitize(value);
-            return _Compare(value, Min) < 0 || _Compare(value, Max) > 0;
+            return CompareSanitized(value, Min) < 0 || CompareSanitized(value, Max) > 0;
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace MeaMod.Utilities.BaseEncoding
         /// </returns>
         public static int Compare(string valueA, string valueB)
         {
-            return _Compare(Sanitize(valueA), Sanitize(valueB));
+            return CompareSanitized(Sanitize(valueA), Sanitize(valueB));
         }
 
         /// <summary>
@@ -94,16 +94,16 @@ namespace MeaMod.Utilities.BaseEncoding
 
         private static string Abs(string value)
         {
-            return value[0] == '-' ? value.Substring(1, value.Length - 1) : value;
+            return value[0] == '-' ? value.Substring(1) : value;
         }
 
         private static void CheckOverflow(string value)
         {
-            if (_Compare(value, Min) < 0)
+            if (CompareSanitized(value, Min) < 0)
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "Value \"{0}\" would overflow since it's less than long.MinValue.", value));
 
-            if (_Compare(value, Max) > 0)
+            if (CompareSanitized(value, Max) > 0)
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "Value \"{0}\" would overflow since it's greater than long.MaxValue.", value));
         }
@@ -140,7 +140,7 @@ namespace MeaMod.Utilities.BaseEncoding
         /// Compares two sanitized values. Returns a negative number when <paramref name="valueA"/> is less than
         /// <paramref name="valueB"/>, zero when equal and a positive number when greater (string.Compare semantics).
         /// </summary>
-        private static int _Compare(string valueA, string valueB)
+        private static int CompareSanitized(string valueA, string valueB)
         {
             if (valueA == valueB)
                 return 0;

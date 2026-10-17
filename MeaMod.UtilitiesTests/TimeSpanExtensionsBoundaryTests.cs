@@ -4,6 +4,7 @@
     /// Exactly one day / hour / minute used to fall through to the next smaller unit and print "0 hours", "00:00" etc.
     /// </summary>
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class TimeSpanExtensionsBoundaryTests
     {
         [TestMethod]

@@ -4,6 +4,7 @@ using MeaMod.Utilities.UI.WinForms;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class CircularProgressControlTests
     {
         private static int CountNonWhitePixels(Bitmap bitmap)
@@ -101,7 +102,7 @@ namespace MeaMod.Utilities.Tests
                 control.DrawToBitmap(bitmap, new Rectangle(0, 0, 100, 100));
 
                 Assert.IsTrue(painted, "the public Paint event did not fire");
-                Assert.IsTrue(CountNonWhitePixels(bitmap) > 0, "nothing was drawn");
+                Assert.IsGreaterThan(0, CountNonWhitePixels(bitmap), "nothing was drawn");
             });
         }
 
@@ -120,7 +121,7 @@ namespace MeaMod.Utilities.Tests
 
                 control.DrawToBitmap(bitmap, new Rectangle(0, 0, 60, 60));
 
-                Assert.IsTrue(CountNonWhitePixels(bitmap) > 0, "nothing was drawn");
+                Assert.IsGreaterThan(0, CountNonWhitePixels(bitmap), "nothing was drawn");
             });
         }
 

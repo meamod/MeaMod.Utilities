@@ -11,8 +11,8 @@ namespace MeaMod.Utilities.Cryptography
     /// </summary>
     public class X509AuthorityKeyIdentifierExtension : X509Extension
     {
-        private static Oid AuthorityKeyIdentifierOid => new Oid("2.5.29.35");
-        private static Oid SubjectKeyIdentifierOid => new Oid("2.5.29.14");
+        private static Oid AuthorityKeyIdentifierOid => new("2.5.29.35");
+        private static Oid SubjectKeyIdentifierOid => new("2.5.29.14");
 
         /// <summary>
         /// Initializes a new instance of the X509AuthorityKeyIdentifierExtension class using a X509Certificate2 and a value indicating whether the extension is critical.
@@ -31,9 +31,7 @@ namespace MeaMod.Utilities.Cryptography
             if (certificateAuthority == null)
                 throw new ArgumentNullException(nameof(certificateAuthority));
 
-            var subjectKeyIdentifier = certificateAuthority.Extensions.Cast<X509Extension>().FirstOrDefault(p => p.Oid?.Value == SubjectKeyIdentifierOid.Value);
-            if (subjectKeyIdentifier == null)
-                throw new ArgumentException("The certificate does not contain a Subject Key Identifier extension.", nameof(certificateAuthority));
+            var subjectKeyIdentifier = certificateAuthority.Extensions.Cast<X509Extension>().FirstOrDefault(p => p.Oid?.Value == SubjectKeyIdentifierOid.Value) ?? throw new ArgumentException("The certificate does not contain a Subject Key Identifier extension.", nameof(certificateAuthority));
 
             // SubjectKeyIdentifier ::= KeyIdentifier (OCTET STRING), i.e. 04 <len> <keyId>
             var rawData = subjectKeyIdentifier.RawData;

@@ -4,6 +4,7 @@ using Microsoft.Win32;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class RegistrySettingsMoreTests
     {
         private const string TestBaseKey = @"SOFTWARE\MeaMod.Utilities.Tests\";
@@ -42,10 +43,10 @@ namespace MeaMod.Utilities.Tests
         public void LocalMachineReadsWork()
         {
             Assert.IsFalse(string.IsNullOrEmpty(RegistrySettings.GetSettingLM(WindowsNtBaseKey, CurrentVersion, "ProductName")));
-            Assert.IsTrue(RegistrySettings.GetIntegerLM(WindowsNtBaseKey, CurrentVersion, "CurrentMajorVersionNumber") >= 10);
+            Assert.IsGreaterThanOrEqualTo(10, RegistrySettings.GetIntegerLM(WindowsNtBaseKey, CurrentVersion, "CurrentMajorVersionNumber"));
             Assert.AreEqual(0, RegistrySettings.GetIntegerLM(WindowsNtBaseKey, CurrentVersion, "MeaModMissingValue"));
             Assert.IsTrue(RegistrySettings.GetBooleanSettingLM(WindowsNtBaseKey, CurrentVersion, "MeaModMissingValue", defaultValue: true));
-            CollectionAssert.Contains(RegistrySettings.GetValueNamesLM(WindowsNtBaseKey, CurrentVersion), "ProductName");
+            Assert.Contains("ProductName", RegistrySettings.GetValueNamesLM(WindowsNtBaseKey, CurrentVersion));
         }
 
         [TestMethod]
@@ -54,18 +55,25 @@ namespace MeaMod.Utilities.Tests
             Assert.AreEqual(string.Empty, RegistrySettings.GetSettingLM(TestBaseKey, _subKey, "Value"));
             Assert.AreEqual(0, RegistrySettings.GetIntegerLM(TestBaseKey, _subKey, "Value"));
             Assert.IsFalse(RegistrySettings.GetBooleanSettingLM(TestBaseKey, _subKey, "Value"));
-            Assert.AreEqual(0, RegistrySettings.GetValueNamesLM(TestBaseKey, _subKey).Length);
-            Assert.AreEqual(0, RegistrySettings.GetValueNames(TestBaseKey, _subKey).Length);
+            Assert.IsEmpty(RegistrySettings.GetValueNamesLM(TestBaseKey, _subKey));
+            Assert.IsEmpty(RegistrySettings.GetValueNames(TestBaseKey, _subKey));
         }
 
         [TestMethod]
         public void LocalMachineWritesRequireElevationOrRoundTrip()
         {
+            bool elevated;
             try
             {
                 RegistrySettings.SaveSettingLM(TestBaseKey, _subKey, "String", "x");
+                elevated = true;
             }
             catch (UnauthorizedAccessException)
+            {
+                elevated = false;
+            }
+
+            if (!elevated)
             {
                 // Not elevated: the write path was exercised up to the access check.
                 Assert.ThrowsExactly<UnauthorizedAccessException>(() => RegistrySettings.SaveIntegerLM(TestBaseKey, _subKey, "Int", 1));
@@ -131,7 +139,7 @@ namespace MeaMod.Utilities.Tests
             RegistrySettings.SaveSetting(TestBaseKey, _subKey, "Name", "value");
 
             Assert.AreEqual("value", RegistrySettings.GetSetting(TestBaseKey, _subKey, "Name"));
-            CollectionAssert.Contains(RegistrySettings.GetValueNames(TestBaseKey, _subKey), "Name");
+            Assert.Contains("Name", RegistrySettings.GetValueNames(TestBaseKey, _subKey));
         }
     }
 }

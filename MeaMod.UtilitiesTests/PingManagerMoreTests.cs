@@ -4,8 +4,11 @@ using MeaMod.Utilities.NetworkTools.IcmpPing;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class PingManagerMoreTests
     {
+        public TestContext TestContext { get; set; } = null!;
+
         [TestMethod]
         public void ConstructorRejectsBadArguments()
         {
@@ -35,7 +38,7 @@ namespace MeaMod.Utilities.Tests
         }
 
         [TestMethod]
-        [Timeout(60_000)]
+        [Timeout(60_000, CooperativeCancellation = true)]
         public void UnresolvableHostReportsAPingException()
         {
             var manager = new PingManager("host.invalid", TimeSpan.FromSeconds(1));
@@ -51,9 +54,9 @@ namespace MeaMod.Utilities.Tests
             };
 
             manager.Start();
-            Assert.IsTrue(got.Wait(TimeSpan.FromSeconds(30)), "no ping result");
+            Assert.IsTrue(got.Wait(TimeSpan.FromSeconds(30), TestContext.CancellationToken), "no ping result");
             manager.Stop();
-            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(10)));
+            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(10), TestContext.CancellationToken));
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Success);
@@ -62,8 +65,8 @@ namespace MeaMod.Utilities.Tests
             Assert.IsFalse(string.IsNullOrWhiteSpace(result.ToString()));
             lock (states)
             {
-                CollectionAssert.Contains(states, PingManagerStates.Pinging);
-                CollectionAssert.Contains(states, PingManagerStates.Idle);
+                Assert.Contains(PingManagerStates.Pinging, states);
+                Assert.Contains(PingManagerStates.Idle, states);
             }
         }
 
@@ -80,14 +83,14 @@ namespace MeaMod.Utilities.Tests
             Assert.IsTrue(args.Success);
             Assert.AreSame(reply, args.Reply);
             Assert.IsNull(args.LastException);
-            StringAssert.StartsWith(args.ToString(), "Reply from 127.0.0.1");
+            Assert.StartsWith("Reply from 127.0.0.1", args.ToString());
         }
 
         [TestMethod]
         public void UnsuccessfulReplyIsNotASuccess()
         {
             using var ping = new Ping();
-            PingReply reply;
+            PingReply? reply = null;
             try
             {
                 // TEST-NET-1 is never routed, so this times out or is reported unreachable.
@@ -95,17 +98,18 @@ namespace MeaMod.Utilities.Tests
             }
             catch (PingException)
             {
-                Assert.Inconclusive("no network stack available for the probe");
-                return;
+                // No network stack available for the probe; reported below.
             }
 
+            if (reply == null)
+                Assert.Inconclusive("no network stack available for the probe");
             if (reply.Status == IPStatus.Success)
                 Assert.Inconclusive("192.0.2.1 unexpectedly answered");
 
             var args = new PingResultEventArgs(reply, null);
 
             Assert.IsFalse(args.Success);
-            StringAssert.Contains(args.ToString(), reply.Status.ToString());
+            Assert.Contains(reply.Status.ToString(), args.ToString());
         }
 
         [TestMethod]

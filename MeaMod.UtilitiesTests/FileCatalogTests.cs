@@ -7,15 +7,16 @@ using MeaMod.Utilities.Security;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass()]
+    [OSCondition(OperatingSystems.Windows)]
     public class FileCatalogTests
     {
-        private static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "","testfiles");
+        private static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", "testfiles");
         private static readonly string CatalogFolder = System.IO.Path.Combine(Path, "vlc");
         private static readonly Collection<string> Paths =
         [
             CatalogFolder
         ];
-        private static readonly Progress<CatalogProgress> ProgressDownloadIndicator = new Progress<CatalogProgress>(ValidateProgress);
+        private static readonly Progress<CatalogProgress> ProgressDownloadIndicator = new(ValidateProgress);
 
         public static void ValidateProgress(CatalogProgress obj)
         {
@@ -29,49 +30,49 @@ namespace MeaMod.Utilities.Tests
         public void ValidateTestValidUnsigned()
         {
             var catalogFile = System.IO.Path.Combine(Path, "vlc_valid.cat");
-            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile,ProgressDownloadIndicator);
+            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile, ProgressDownloadIndicator);
             Assert.IsNotNull(catalogInfo);
-            Assert.IsTrue(catalogInfo.Signature.Status == SignatureStatus.NotSigned);
-            Assert.IsTrue(catalogInfo.Status == CatalogValidationStatus.Valid);
+            Assert.AreEqual(SignatureStatus.NotSigned, catalogInfo.Signature.Status);
+            Assert.AreEqual(CatalogValidationStatus.Valid, catalogInfo.Status);
         }
         [TestMethod()]
         public void ValidateTestValidSigned()
         {
             var catalogFile = System.IO.Path.Combine(Path, "vlc_valid_signed.cat");
-            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile,ProgressDownloadIndicator);
+            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile, ProgressDownloadIndicator);
             Assert.IsNotNull(catalogInfo);
-            Assert.IsTrue(catalogInfo.Signature.Status == SignatureStatus.Valid);
-            Assert.IsTrue(catalogInfo.Status == CatalogValidationStatus.Valid);
+            Assert.AreEqual(SignatureStatus.Valid, catalogInfo.Signature.Status);
+            Assert.AreEqual(CatalogValidationStatus.Valid, catalogInfo.Status);
         }
 
         [TestMethod()]
         public void ValidateTestInvalidSigned()
         {
             var catalogFile = System.IO.Path.Combine(Path, "vlc_invalid_signed.cat");
-            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile,ProgressDownloadIndicator);
+            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile, ProgressDownloadIndicator);
             Assert.IsNotNull(catalogInfo);
-            Assert.IsTrue(catalogInfo.Signature.Status == SignatureStatus.Valid);
-            Assert.IsTrue(catalogInfo.Status == CatalogValidationStatus.ValidationFailed);
+            Assert.AreEqual(SignatureStatus.Valid, catalogInfo.Signature.Status);
+            Assert.AreEqual(CatalogValidationStatus.ValidationFailed, catalogInfo.Status);
         }
 
         [TestMethod()]
         public void ValidateTestInvalidSignedInvalid()
         {
             var catalogFile = System.IO.Path.Combine(Path, "vlc_invalid_signed_invalid.cat");
-            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile,ProgressDownloadIndicator);
+            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile, ProgressDownloadIndicator);
             Assert.IsNotNull(catalogInfo);
-            Assert.IsTrue(catalogInfo.Signature.Status == SignatureStatus.NotSigned);
-            Assert.IsTrue(catalogInfo.Status == CatalogValidationStatus.ValidationFailed);
+            Assert.AreEqual(SignatureStatus.NotSigned, catalogInfo.Signature.Status);
+            Assert.AreEqual(CatalogValidationStatus.ValidationFailed, catalogInfo.Status);
         }
 
         [TestMethod()]
         public void ValidateTestInvalidUnsigned()
         {
             var catalogFile = System.IO.Path.Combine(Path, "vlc_invalid.cat");
-            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile,ProgressDownloadIndicator);
+            CatalogInformation catalogInfo = FileCatalog.Validate(Paths, catalogFile, ProgressDownloadIndicator);
             Assert.IsNotNull(catalogInfo);
-            Assert.IsTrue(catalogInfo.Signature.Status == SignatureStatus.NotSigned);
-            Assert.IsTrue(catalogInfo.Status == CatalogValidationStatus.ValidationFailed);
+            Assert.AreEqual(SignatureStatus.NotSigned, catalogInfo.Signature.Status);
+            Assert.AreEqual(CatalogValidationStatus.ValidationFailed, catalogInfo.Status);
         }
     }
 }

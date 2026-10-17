@@ -94,13 +94,13 @@ namespace MeaMod.Utilities
         /// <summary>
         /// USB devices
         /// </summary>
-        private static readonly Guid GuidDeviceInterfaceUSBDevice = new Guid("A5DCBF10-6530-11D2-901F-00C04FB951ED");
+        private static readonly Guid GuidDeviceInterfaceUSBDevice = new("A5DCBF10-6530-11D2-901F-00C04FB951ED");
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/install/guid-devinterface-monitor
         /// <summary>
         /// Monitor devices
         /// </summary>
-        private static readonly Guid GuidDeviceInterfaceMonitorDevice = new Guid("E6F07B5F-EE97-4a90-B076-33F57BF4EAA7"); 
+        private static readonly Guid GuidDeviceInterfaceMonitorDevice = new("E6F07B5F-EE97-4a90-B076-33F57BF4EAA7");
 
         private static IntPtr usbNotificationHandle;
 
@@ -134,12 +134,12 @@ namespace MeaMod.Utilities
             if (lParam == IntPtr.Zero)
                 return false;
 
-            DevBroadcastHdr hdr = (DevBroadcastHdr)Marshal.PtrToStructure(lParam, typeof(DevBroadcastHdr));
+            DevBroadcastHdr hdr = Marshal.PtrToStructure<DevBroadcastHdr>(lParam);
 
             if (hdr.DeviceType != DbtDeviceTypeDeviceInterface)
                 return false;
 
-            DevBroadcastDeviceInterface devIF = (DevBroadcastDeviceInterface)Marshal.PtrToStructure(lParam, typeof(DevBroadcastDeviceInterface));
+            DevBroadcastDeviceInterface devIF = Marshal.PtrToStructure<DevBroadcastDeviceInterface>(lParam);
 
             return devIF.ClassGuid == classGuid;
 

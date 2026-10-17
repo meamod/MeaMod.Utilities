@@ -7,6 +7,7 @@ using MeaMod.Utilities.NetworkTools.Whois;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class NetworkToolsExceptionTests
     {
         private static void AssertConstructors<T>(Func<T> plain, Func<string, T> withMessage, Func<string, Exception, T> withInner)

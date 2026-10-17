@@ -3,6 +3,7 @@
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class TraceRouteTests
     {
         [TestMethod]
@@ -11,8 +12,8 @@ namespace MeaMod.Utilities.Tests
             // The old code printed the Milliseconds component, so 1.5 s showed as "500ms".
             var detail = new TraceRouteHopDetail(1, "10.0.0.1", "router", TimeSpan.FromSeconds(1.5));
 
-            StringAssert.Contains(detail.ToString(), 1500d.ToString("N0") + "ms");
-            StringAssert.Contains(detail.ToString(), "router");
+            Assert.Contains(1500d.ToString("N0") + "ms", detail.ToString());
+            Assert.Contains("router", detail.ToString());
         }
 
         [TestMethod]
@@ -21,8 +22,8 @@ namespace MeaMod.Utilities.Tests
             var detail = new TraceRouteHopDetail(2, "*", "***Request Timed Out***", TimeSpan.MaxValue);
 
             string text = detail.ToString();
-            StringAssert.Contains(text, " * ");
-            Assert.IsFalse(text.Contains("ms"), text);
+            Assert.Contains(" * ", text);
+            Assert.DoesNotContain("ms", text, text);
         }
 
         [TestMethod]
@@ -35,11 +36,11 @@ namespace MeaMod.Utilities.Tests
 
             var hops = (await manager.ExecuteTraceRoute("127.0.0.1")).ToList();
 
-            Assert.AreEqual(1, hops.Count, string.Join(Environment.NewLine, hops));
+            Assert.HasCount(1, hops, string.Join(Environment.NewLine, hops));
             Assert.AreEqual("127.0.0.1", hops[0].IPAddress);
             Assert.AreEqual(1, hops[0].HopNumber);
             Assert.AreNotEqual(TimeSpan.MaxValue, hops[0].ResponseTime);
-            Assert.AreEqual(1, found.Count);
+            Assert.HasCount(1, found);
         }
 
         [TestMethod]
@@ -50,7 +51,7 @@ namespace MeaMod.Utilities.Tests
 
             var hops = (await manager.ExecuteTraceRoute("127.0.0.1")).ToList();
 
-            Assert.AreEqual(1, hops.Count);
+            Assert.HasCount(1, hops);
         }
 
         [TestMethod]

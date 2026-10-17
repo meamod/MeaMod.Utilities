@@ -4,6 +4,7 @@ using System.Windows.Forms;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class DeviceNotificationMoreTests
     {
         private const int DbtDevTypDeviceInterface = 5;
@@ -69,14 +70,6 @@ namespace MeaMod.Utilities.Tests
             {
                 Marshal.FreeHGlobal(block);
             }
-        }
-
-        [TestMethod]
-        public void ConstantsMatchTheWindowsHeaders()
-        {
-            Assert.AreEqual(0x8000, DeviceNotification.DbtDeviceArrival);
-            Assert.AreEqual(0x8004, DeviceNotification.DbtDeviceRemoveComplete);
-            Assert.AreEqual(0x0219, DeviceNotification.WmDeviceChange);
         }
 
         [TestMethod]

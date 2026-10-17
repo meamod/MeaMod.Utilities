@@ -3,6 +3,7 @@
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class RandomExtensionsTests
     {
         /// <summary>Returns a fixed fraction so the scaling arithmetic can be checked exactly.</summary>

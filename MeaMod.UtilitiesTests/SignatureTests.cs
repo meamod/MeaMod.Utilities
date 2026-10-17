@@ -8,6 +8,7 @@ using MeaMod.Utilities.Security;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class SignatureTests
     {
         private static readonly string TestFiles = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", "testfiles");
@@ -55,7 +56,7 @@ namespace MeaMod.Utilities.Tests
             var withExtension = new Signature(@"C:\somewhere\file.xyz", Win32Errors.TRUST_E_PROVIDER_UNKNOWN);
             var withoutExtension = new Signature(@"C:\somewhere\file", Win32Errors.TRUST_E_PROVIDER_UNKNOWN);
 
-            StringAssert.Contains(withExtension.StatusMessage, ".xyz");
+            Assert.Contains(".xyz", withExtension.StatusMessage);
             Assert.IsFalse(string.IsNullOrWhiteSpace(withoutExtension.StatusMessage));
             Assert.AreNotEqual(withExtension.StatusMessage, withoutExtension.StatusMessage);
         }
@@ -98,7 +99,7 @@ namespace MeaMod.Utilities.Tests
             Assert.IsFalse(string.IsNullOrWhiteSpace(info.Signature.SignerCertificate.Subject));
             Assert.IsFalse(string.IsNullOrWhiteSpace(info.Signature.StatusMessage));
             Assert.AreEqual("SHA256", info.HashAlgorithm);
-            Assert.IsTrue(info.CatalogItems.Count > 0);
+            Assert.IsNotEmpty(info.CatalogItems);
         }
 
         [TestMethod]

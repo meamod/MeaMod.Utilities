@@ -4,6 +4,7 @@ using MmTripleDES = MeaMod.Utilities.Cryptography.TripleDES;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class TripleDESTests
     {
         [TestMethod]

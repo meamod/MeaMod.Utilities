@@ -4,6 +4,7 @@ using MeaMod.Utilities.Zip;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class ZipFileExtensionsMoreTests
     {
         private string _root = string.Empty;
@@ -42,7 +43,7 @@ namespace MeaMod.Utilities.Tests
         public void DirectoryEntriesAreCreated()
         {
             string destination = Path.Combine(_root, "out");
-            using var stream = CreateArchive(("dir/", Array.Empty<byte>()), ("dir/file.txt", new byte[] { 65 }), ("empty/", Array.Empty<byte>()));
+            using var stream = CreateArchive(("dir/", Array.Empty<byte>()), ("dir/file.txt", "A"u8.ToArray()), ("empty/", Array.Empty<byte>()));
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
             archive.ExtractToDirectory(destination, (IProgress<ZipProgress>?)null);
@@ -65,7 +66,7 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void NullArgumentsAreRejected()
         {
-            using var stream = CreateArchive(("a.txt", new byte[] { 65 }));
+            using var stream = CreateArchive(("a.txt", "A"u8.ToArray()));
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
             Assert.ThrowsExactly<ArgumentNullException>(() => ((ZipArchive)null!).ExtractToDirectory(_root, (IProgress<ZipProgress>?)null));
@@ -76,7 +77,7 @@ namespace MeaMod.Utilities.Tests
         public void ExistingFilesAreOnlyOverwrittenWhenAsked()
         {
             string destination = Path.Combine(_root, "out");
-            using var stream = CreateArchive(("a.txt", new byte[] { 65 }));
+            using var stream = CreateArchive(("a.txt", "A"u8.ToArray()));
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
             archive.ExtractToDirectory(destination, (IProgress<ZipProgress>?)null);

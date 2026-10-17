@@ -10,6 +10,7 @@ namespace MeaMod.Utilities.Tests
     /// interactive users may write to; creating sources and logs needs elevation and is skipped otherwise.
     /// </summary>
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class LogEventEventLogTests
     {
         private const string Marker = "MeaMod.Utilities.Tests event log write test";

@@ -58,10 +58,8 @@ namespace MeaMod.Utilities
                         EventLog.CreateEventSource(source, logName);
                     }
 
-                    using (var objEventLog = new EventLog { Source = source })
-                    {
-                        objEventLog.WriteEntry(message, eventType, eventID);
-                    }
+                    using var objEventLog = new EventLog { Source = source };
+                    objEventLog.WriteEntry(message, eventType, eventID);
                 }
                 catch (Exception)
                 {
@@ -125,12 +123,10 @@ namespace MeaMod.Utilities
         {
             if (EventLog.SourceExists(source))
             {
-                using (var evLog = new EventLog() { Source = source })
+                using var evLog = new EventLog() { Source = source };
+                if ((evLog.Log ?? "") != (logName ?? ""))
                 {
-                    if ((evLog.Log ?? "") != (logName ?? ""))
-                    {
-                        EventLog.DeleteEventSource(source);
-                    }
+                    EventLog.DeleteEventSource(source);
                 }
             }
 

@@ -20,7 +20,7 @@ namespace MeaMod.Utilities.UI.WinForms
         private const int DEFAULT_TICK_WIDTH = 2;
         private const int MINIMUM_INNER_RADIUS = 4;
         private const int MINIMUM_OUTER_RADIUS = 8;
-        private Size MINIMUM_CONTROL_SIZE = new Size(28, 28);
+        private Size MINIMUM_CONTROL_SIZE = new(28, 28);
         private const int MINIMUM_PEN_WIDTH = 2;
         private const float INNER_RADIUS_FACTOR = 0.175F;
         private const float OUTER_RADIUS_FACTOR = 0.3125F;
@@ -29,9 +29,12 @@ namespace MeaMod.Utilities.UI.WinForms
 
         #region Enums
 
+        /// <summary>Direction the spokes rotate in.</summary>
         public enum Direction
         {
+            /// <summary>Rotate clockwise.</summary>
             CLOCKWISE,
+            /// <summary>Rotate anticlockwise.</summary>
             ANTICLOCKWISE
         }
 
@@ -57,17 +60,17 @@ namespace MeaMod.Utilities.UI.WinForms
 
         private int m_Interval;
         Pen m_Pen = null;
-        PointF m_CentrePt = new PointF();
+        PointF m_CentrePt = new();
         int m_InnerRadius = 0;
         int m_OuterRadius = 0;
-        int m_SpokesCount = 0;
+        readonly int m_SpokesCount = 0;
         int m_AlphaChange = 0;
-        int m_AlphaLowerLimit = 0;
+        readonly int m_AlphaLowerLimit = 0;
         float m_StartAngle = 0;
         float m_AngleIncrement = 0;
         Direction m_Rotation;
         // A WinForms timer ticks on the UI thread, so the angle and Invalidate() are never touched cross-thread.
-        System.Windows.Forms.Timer m_Timer = null;
+        readonly System.Windows.Forms.Timer m_Timer = null;
         List<Spoke> m_Spokes = null;
 
         #endregion
@@ -163,9 +166,11 @@ namespace MeaMod.Utilities.UI.WinForms
             m_AlphaLowerLimit = 15;
 
             // Create the Pen
-            m_Pen = new Pen(TickColor, DEFAULT_TICK_WIDTH);
-            m_Pen.EndCap = System.Drawing.Drawing2D.LineCap.Round;
-            m_Pen.StartCap = System.Drawing.Drawing2D.LineCap.Round;
+            m_Pen = new Pen(TickColor, DEFAULT_TICK_WIDTH)
+            {
+                EndCap = System.Drawing.Drawing2D.LineCap.Round,
+                StartCap = System.Drawing.Drawing2D.LineCap.Round
+            };
 
             // Default rotation direction is clockwise
             this.Rotation = Direction.CLOCKWISE;
@@ -174,8 +179,10 @@ namespace MeaMod.Utilities.UI.WinForms
             CalculateSpokesPoints();
 
             // Owned by the designer container so it is stopped and disposed together with the control.
-            m_Timer = new System.Windows.Forms.Timer(components);
-            m_Timer.Interval = this.Interval;
+            m_Timer = new System.Windows.Forms.Timer(components)
+            {
+                Interval = this.Interval
+            };
             m_Timer.Tick += new EventHandler(OnTimerTick);
         }
 
@@ -188,7 +195,7 @@ namespace MeaMod.Utilities.UI.WinForms
             if (m_Pen == null || m_SpokesCount == 0)
                 return;
 
-            m_Spokes = new List<Spoke>();
+            m_Spokes = [];
 
             // Calculate the angle between adjacent spokes
             m_AngleIncrement = (360 / (float)m_SpokesCount);
@@ -215,11 +222,11 @@ namespace MeaMod.Utilities.UI.WinForms
 
             for (int i = 0; i < m_SpokesCount; i++)
             {
-                PointF pt1 = new PointF(m_InnerRadius * (float)Math.Cos(ConvertDegreesToRadians(angle)), m_InnerRadius * (float)Math.Sin(ConvertDegreesToRadians(angle)));
-                PointF pt2 = new PointF(m_OuterRadius * (float)Math.Cos(ConvertDegreesToRadians(angle)), m_OuterRadius * (float)Math.Sin(ConvertDegreesToRadians(angle)));
+                PointF pt1 = new(m_InnerRadius * (float)Math.Cos(CircularProgressControl.ConvertDegreesToRadians(angle)), m_InnerRadius * (float)Math.Sin(CircularProgressControl.ConvertDegreesToRadians(angle)));
+                PointF pt2 = new(m_OuterRadius * (float)Math.Cos(CircularProgressControl.ConvertDegreesToRadians(angle)), m_OuterRadius * (float)Math.Sin(CircularProgressControl.ConvertDegreesToRadians(angle)));
 
                 // Create a spoke based on the points generated
-                Spoke spoke = new Spoke(pt1, pt2);
+                Spoke spoke = new(pt1, pt2);
                 // Add the spoke to the List
                 m_Spokes.Add(spoke);
 
@@ -322,7 +329,7 @@ namespace MeaMod.Utilities.UI.WinForms
         /// </summary>
         /// <param name="degrees">Degrees</param>
         /// <returns></returns>
-        private double ConvertDegreesToRadians(float degrees)
+        private static double ConvertDegreesToRadians(float degrees)
         {
             return ((Math.PI / (double)180) * degrees);
         }
@@ -348,10 +355,7 @@ namespace MeaMod.Utilities.UI.WinForms
         /// </summary>
         public void Stop()
         {
-            if (m_Timer != null)
-            {
-                m_Timer.Enabled = false;
-            }
+            m_Timer?.Enabled = false;
         }
 
         #endregion

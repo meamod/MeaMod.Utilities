@@ -55,7 +55,7 @@ namespace MeaMod.Utilities
         {
             string formatted = string.Format("{0}{1}{2}{3}",
                 span.Duration().Days > 0 ? string.Format("{0:D2}:", span.Days) : string.Empty,
-                span.Duration().Hours > 0 ? string.Format("{0:D2}:", span.Hours)  : string.Empty,
+                span.Duration().Hours > 0 ? string.Format("{0:D2}:", span.Hours) : string.Empty,
                 span.Duration().Minutes > 0 ? string.Format("{0:D2}:", span.Minutes) : string.Empty,
                 span.Duration().Seconds > 0 ? string.Format("{0:D2}", span.Seconds) : string.Empty);
 
@@ -112,7 +112,7 @@ namespace MeaMod.Utilities
                     string.Format("{0:D2}", span.Seconds))
             };
 
-            
+
             if (formatted.EndsWith(":")) formatted = formatted.Substring(0, formatted.Length - 1);
 
             if (string.IsNullOrEmpty(formatted)) formatted = "00:00";

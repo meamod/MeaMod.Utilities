@@ -4,6 +4,7 @@ using MeaMod.Utilities.UI.WinForms;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class CircularProgressControlMoreTests
     {
         [TestMethod]

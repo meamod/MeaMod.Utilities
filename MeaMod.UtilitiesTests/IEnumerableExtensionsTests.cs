@@ -3,6 +3,7 @@
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class IEnumerableExtensionsTests
     {
         [TestMethod]
@@ -13,15 +14,17 @@ namespace MeaMod.Utilities.Tests
 
             IEnumerable<int> result = source.Each(seen.Add);
 
-            CollectionAssert.AreEqual(source, seen);
+            Assert.AreSequenceEqual(source, seen);
             Assert.AreSame(source, result);
         }
+
+        private static readonly int[] instance = [1];
 
         [TestMethod]
         public void EachRejectsNullArguments()
         {
             Assert.ThrowsExactly<ArgumentNullException>(() => ((IEnumerable<int>)null!).Each(_ => { }));
-            Assert.ThrowsExactly<ArgumentNullException>(() => new[] { 1 }.Each(null!));
+            Assert.ThrowsExactly<ArgumentNullException>(() => instance.Each(null!));
         }
     }
 }

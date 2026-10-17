@@ -7,6 +7,7 @@ namespace MeaMod.Utilities.Tests
     /// </summary>
     [TestClass]
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    [OSCondition(OperatingSystems.Windows)]
     public class RegistrySettingsTests
     {
         private const string BaseKey = @"SOFTWARE\MeaMod.Utilities.Tests\";
@@ -124,7 +125,7 @@ namespace MeaMod.Utilities.Tests
             RegistrySettings.DeleteSetting(BaseKey, _subKey, "Value");
             RegistrySettings.DeleteSetting(BaseKey, _subKey, "Value");
 
-            CollectionAssert.DoesNotContain(RegistrySettings.GetValueNames(BaseKey, _subKey), "Value");
+            Assert.DoesNotContain("Value", RegistrySettings.GetValueNames(BaseKey, _subKey));
         }
     }
 }

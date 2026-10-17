@@ -4,6 +4,7 @@ using MeaMod.Utilities.NetworkTools.TraceRoute;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class TraceRouteMoreTests
     {
         [TestMethod]
@@ -25,7 +26,7 @@ namespace MeaMod.Utilities.Tests
         }
 
         [TestMethod]
-        [Timeout(30_000)]
+        [Timeout(30_000, CooperativeCancellation = true)]
         public void GetResponseTimeForAnUnreachableAddressIsMaxValue()
         {
             // The old code returned 0ms for a timed-out reply.
@@ -43,11 +44,11 @@ namespace MeaMod.Utilities.Tests
 
             Assert.IsNotNull(completed);
             Assert.IsNotNull(completed.TraceRouteHops);
-            CollectionAssert.AreEqual(hops, completed.TraceRouteHops);
+            Assert.AreSequenceEqual(hops, completed.TraceRouteHops);
         }
 
         [TestMethod]
-        [Timeout(90_000)]
+        [Timeout(90_000, CooperativeCancellation = true)]
         public async Task CancelDuringATraceStopsAfterTheCurrentHop()
         {
             var manager = new TraceRouteManager();
@@ -55,39 +56,40 @@ namespace MeaMod.Utilities.Tests
 
             var hops = (await manager.ExecuteTraceRoute("192.0.2.1")).ToList();
 
-            Assert.AreEqual(1, hops.Count, string.Join(Environment.NewLine, hops));
+            Assert.HasCount(1, hops, string.Join(Environment.NewLine, hops));
             Assert.AreEqual(1, hops[0].HopNumber);
         }
 
         [TestMethod]
-        [Timeout(300_000)]
+        [Timeout(300_000, CooperativeCancellation = true)]
         public async Task MultiHopTraceRecordsIntermediateHops()
         {
+            PingReply? probe = null;
             using (var ping = new Ping())
             {
-                PingReply probe;
                 try
                 {
                     probe = ping.Send("1.1.1.1", 2000);
                 }
                 catch (PingException)
                 {
-                    Assert.Inconclusive("no network available");
-                    return;
+                    // No network available; reported below.
                 }
-
-                if (probe.Status != IPStatus.Success)
-                    Assert.Inconclusive("1.1.1.1 is not reachable: " + probe.Status);
             }
+
+            if (probe == null)
+                Assert.Inconclusive("no network available");
+            if (probe.Status != IPStatus.Success)
+                Assert.Inconclusive("1.1.1.1 is not reachable: " + probe.Status);
 
             var manager = new TraceRouteManager();
             var hops = (await manager.ExecuteTraceRoute("1.1.1.1")).ToList();
 
-            Assert.IsTrue(hops.Count >= 2, "expected at least one intermediate hop");
+            Assert.IsGreaterThanOrEqualTo(2, hops.Count, "expected at least one intermediate hop");
             Assert.AreEqual("1.1.1.1", hops[hops.Count - 1].IPAddress);
             for (int i = 0; i < hops.Count; i++)
                 Assert.AreEqual(i + 1, hops[i].HopNumber);
-            Assert.IsTrue(hops.Any(h => h.ResponseTime != TimeSpan.MaxValue));
+            Assert.Contains(h => h.ResponseTime != TimeSpan.MaxValue, hops);
         }
 
         [TestMethod]
@@ -105,8 +107,8 @@ namespace MeaMod.Utilities.Tests
             Assert.AreEqual("10.0.0.3", detail.IPAddress);
             Assert.AreEqual("three", detail.HostName);
             Assert.AreEqual(TimeSpan.FromMilliseconds(12), detail.ResponseTime);
-            StringAssert.Contains(TraceRouteHopDetail.FormattedTextHeader, "Hop IP Address");
-            StringAssert.Contains(detail.ToString(), "12ms");
+            Assert.Contains("Hop IP Address", TraceRouteHopDetail.FormattedTextHeader);
+            Assert.Contains("12ms", detail.ToString());
         }
 
         [TestMethod]
@@ -123,7 +125,7 @@ namespace MeaMod.Utilities.Tests
         }
 
         [TestMethod]
-        [Timeout(120_000)]
+        [Timeout(120_000, CooperativeCancellation = true)]
         public async Task TraceToAnUnroutableAddressTerminatesWithinMaxHops()
         {
             // Every probe beyond the local gateway either times out or is reported unreachable, so this exercises

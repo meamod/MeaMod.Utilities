@@ -1,6 +1,7 @@
 ﻿namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class UserTimeoutTests
     {
         [TestMethod]
@@ -9,8 +10,8 @@
             int first = UserTimeout.GetLastInputTime();
             int second = UserTimeout.GetLastInputTime();
 
-            Assert.IsTrue(first >= 0, first.ToString());
-            Assert.IsTrue(second >= 0, second.ToString());
+            Assert.IsGreaterThanOrEqualTo(0, first, first.ToString());
+            Assert.IsGreaterThanOrEqualTo(0, second, second.ToString());
         }
     }
 }

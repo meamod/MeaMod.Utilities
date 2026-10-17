@@ -3,6 +3,7 @@
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class ControlExtensionsTests
     {
         [TestMethod]

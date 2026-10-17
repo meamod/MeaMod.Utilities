@@ -84,10 +84,9 @@ namespace MeaMod.Utilities.Security
         /// <returns>Version of the catalog.</returns>
         private static int GetCatalogVersion(SafeCATHandle catalogHandle)
         {
-            int catalogVersion = -1;
-
             WinTrustMethods.CRYPTCATSTORE catalogInfo = WinTrustMethods.CryptCATStoreFromHandle(catalogHandle);
 
+            int catalogVersion;
             if (catalogInfo.dwPublicVersion == catalogVersion2)
             {
                 catalogVersion = 2;
@@ -211,7 +210,7 @@ namespace MeaMod.Utilities.Security
             using (catAdmin)
             using (fileStream)
             {
-                byte[] hashBytes = Array.Empty<byte>();
+                byte[] hashBytes = [];
                 try
                 {
                     hashBytes = WinTrustMethods.CryptCATAdminCalcHashFromFileHandle2(catAdmin, fileStream.SafeFileHandle);
@@ -236,7 +235,7 @@ namespace MeaMod.Utilities.Security
         /// <returns>Dictionary mapping files relative paths to HashValues.</returns>
         internal static Dictionary<string, string> GetHashesFromCatalog(string catalogFilePath, out int catalogVersion)
         {
-            Dictionary<string, string> catalogHashes = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            Dictionary<string, string> catalogHashes = new(StringComparer.CurrentCultureIgnoreCase);
             catalogVersion = 0;
 
             SafeCATHandle resultCatalog;
@@ -247,7 +246,7 @@ namespace MeaMod.Utilities.Security
             catch (Win32Exception e)
             {
                 throw new InvalidOperationException(string.Format(FileCatalogStrings.UnableToOpenCatalogFile, catalogFilePath), e);
-               // return catalogHashes;
+                // return catalogHashes;
             }
 
             using (resultCatalog)
@@ -377,7 +376,7 @@ namespace MeaMod.Utilities.Security
         internal static Dictionary<string, string> CalculateHashesFromPath(Collection<string> folderPaths, string catalogFilePath, string hashAlgorithm, IProgress<CatalogProgress> catalogProgress)
         {
             // Create a HashTable of file Hashes
-            Dictionary<string, string> fileHashes = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            Dictionary<string, string> fileHashes = new(StringComparer.CurrentCultureIgnoreCase);
             int count = 0;
             foreach (string folderPath in folderPaths)
             {
@@ -394,16 +393,16 @@ namespace MeaMod.Utilities.Security
                             continue;
 
                         ProcessPathFile(new FileInfo(fileItem), new DirectoryInfo(folderPath), hashAlgorithm, ref fileHashes);
-                        catalogProgress?.Report(new CatalogProgress("Calculating Hashes",directoryItems.Count(), countDirectoryItems, new FileInfo(fileItem).Name,hashAlgorithm));
+                        catalogProgress?.Report(new CatalogProgress("Calculating Hashes", directoryItems.Count(), countDirectoryItems, new FileInfo(fileItem).Name, hashAlgorithm));
                     }
                 }
                 else if (File.Exists(folderPath))
                 {
                     ProcessPathFile(new FileInfo(folderPath), null, hashAlgorithm, ref fileHashes);
-                    catalogProgress?.Report(new CatalogProgress("Calculating Hashes",folderPaths.Count(), count, new FileInfo(folderPath).Name,hashAlgorithm));
+                    catalogProgress?.Report(new CatalogProgress("Calculating Hashes", folderPaths.Count(), count, new FileInfo(folderPath).Name, hashAlgorithm));
                 }
 
-                
+
             }
 
 
@@ -422,19 +421,19 @@ namespace MeaMod.Utilities.Security
         {
             bool Status = true;
 
-            List<string> relativePathsFromFolder = pathItems.Keys.ToList();
-            List<string> relativePathsFromCatalog = catalogItems.Keys.ToList();
+            List<string> relativePathsFromFolder = [.. pathItems.Keys];
+            List<string> relativePathsFromCatalog = [.. catalogItems.Keys];
 
             // Find entries that are not in both lists. These should be empty lists for success
             // Hashes in Catalog should be exactly similar to the ones from folder
-            List<string> relativePathsNotInFolder = relativePathsFromFolder.Except(relativePathsFromCatalog, StringComparer.CurrentCultureIgnoreCase).ToList();
-            List<string> relativePathsNotInCatalog = relativePathsFromCatalog.Except(relativePathsFromFolder, StringComparer.CurrentCultureIgnoreCase).ToList();
+            List<string> relativePathsNotInFolder = [.. relativePathsFromFolder.Except(relativePathsFromCatalog, StringComparer.CurrentCultureIgnoreCase)];
+            List<string> relativePathsNotInCatalog = [.. relativePathsFromCatalog.Except(relativePathsFromFolder, StringComparer.CurrentCultureIgnoreCase)];
 
             // Found extra hashes in Folder
             if (relativePathsNotInFolder.Count != 0 || relativePathsNotInCatalog.Count != 0)
             {
                 Status = false;
-                catalogProgress?.Report(new CatalogProgress("Comparing Files",relativePathsFromCatalog.Count, relativePathsFromFolder.Count, "Count Mismatch",""));
+                catalogProgress?.Report(new CatalogProgress("Comparing Files", relativePathsFromCatalog.Count, relativePathsFromFolder.Count, "Count Mismatch", ""));
 
             }
 
@@ -455,7 +454,7 @@ namespace MeaMod.Utilities.Security
                         Status = false;
                     }
                 }
-                catalogProgress?.Report(new CatalogProgress("Comparing Files",relativePathsFromCatalog.Count, count, catalogHashValue,""));
+                catalogProgress?.Report(new CatalogProgress("Comparing Files", relativePathsFromCatalog.Count, count, catalogHashValue, ""));
             }
 
             return Status;
@@ -477,15 +476,15 @@ namespace MeaMod.Utilities.Security
             if (string.IsNullOrEmpty(hashAlgorithm)) return null;
 
             Dictionary<string, string> fileHashes = CalculateHashesFromPath(catalogFolders, catalogFilePath, hashAlgorithm, catalogProgress);
-            
-            CatalogInformation catalog = new CatalogInformation
+
+            CatalogInformation catalog = new()
             {
                 CatalogItems = catalogHashes,
                 PathItems = fileHashes
             };
 
-            bool status = CompareDictionaries(catalogHashes, fileHashes,catalogProgress);
-            
+            bool status = CompareDictionaries(catalogHashes, fileHashes, catalogProgress);
+
             catalog.Status = status ? CatalogValidationStatus.Valid : CatalogValidationStatus.ValidationFailed;
 
             catalog.HashAlgorithm = hashAlgorithm;

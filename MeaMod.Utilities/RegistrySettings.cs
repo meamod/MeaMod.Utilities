@@ -10,7 +10,7 @@ namespace MeaMod.Utilities
         /// <param name="baseKey">Base sub key and should look like SOFTWARE\MeaModGroup\ and will be located in HKCU</param>
         /// <param name="appNameSubKey">Name of the SubKey that <paramref name="valueName"/> is located in under <paramref name="baseKey"/></param>
         /// <param name="valueName">Name of registry value to delete</param>
-        public static void DeleteSetting(string baseKey,string appNameSubKey, string valueName)
+        public static void DeleteSetting(string baseKey, string appNameSubKey, string valueName)
         {
             DeleteSetting(Registry.CurrentUser, baseKey, appNameSubKey, valueName, nameof(DeleteSetting));
         }
@@ -30,7 +30,7 @@ namespace MeaMod.Utilities
         /// <param name="valueName">Name of value to retrieve</param>
         /// <param name="defaultValue">Default value if <paramref name="valueName"/> does not exist</param>
         /// <returns>The boolean from <paramref name="valueName"/> or <paramref name="defaultValue"/> if <paramref name="valueName"/> does not exist</returns>
-        public static bool GetBooleanSetting(string baseKey,string appNameSubKey, string valueName, bool defaultValue = false)
+        public static bool GetBooleanSetting(string baseKey, string appNameSubKey, string valueName, bool defaultValue = false)
         {
             return GetBooleanSetting(Registry.CurrentUser, baseKey, appNameSubKey, valueName, defaultValue, nameof(GetBooleanSetting));
         }
@@ -81,7 +81,7 @@ namespace MeaMod.Utilities
         /// <param name="appNameSubKey">Name of the SubKey that <paramref name="valueName"/> is located in under <paramref name="baseKey"/></param>
         /// <param name="valueName">Name of value to retrieve</param>
         /// <returns>The integer value from <paramref name="valueName"/> or 0 if <paramref name="valueName"/> does not exist</returns>
-        public static int GetIntegerLM(string baseKey,string appNameSubKey, string valueName)
+        public static int GetIntegerLM(string baseKey, string appNameSubKey, string valueName)
         {
             return GetInteger(Registry.LocalMachine, baseKey, appNameSubKey, valueName, nameof(GetIntegerLM));
         }
@@ -168,11 +168,9 @@ namespace MeaMod.Utilities
         {
             try
             {
-                using (var registryKey = hive.CreateSubKey(string.Concat(baseKey, appNameSubKey)))
-                {
-                    // throwOnMissingValue: false - deleting a value that is already gone is not an error
-                    registryKey?.DeleteValue(valueName, false);
-                }
+                using var registryKey = hive.CreateSubKey(string.Concat(baseKey, appNameSubKey));
+                // throwOnMissingValue: false - deleting a value that is already gone is not an error
+                registryKey?.DeleteValue(valueName, false);
             }
             catch (Exception exception)
             {
@@ -185,13 +183,11 @@ namespace MeaMod.Utilities
         {
             try
             {
-                using (var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey), RegistryKeyPermissionCheck.ReadSubTree))
-                {
-                    if (registryKey == null)
-                        return defaultValue;
+                using var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey), RegistryKeyPermissionCheck.ReadSubTree);
+                if (registryKey == null)
+                    return defaultValue;
 
-                    return ToBoolean(registryKey.GetValue(valueName), defaultValue);
-                }
+                return ToBoolean(registryKey.GetValue(valueName), defaultValue);
             }
             catch (Exception ex)
             {
@@ -204,11 +200,9 @@ namespace MeaMod.Utilities
         {
             try
             {
-                using (var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey), RegistryKeyPermissionCheck.ReadSubTree))
-                {
-                    // Documented contract: empty string when the key or value does not exist
-                    return registryKey?.GetValue(valueName)?.ToString() ?? string.Empty;
-                }
+                using var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey), RegistryKeyPermissionCheck.ReadSubTree);
+                // Documented contract: empty string when the key or value does not exist
+                return registryKey?.GetValue(valueName)?.ToString() ?? string.Empty;
             }
             catch (Exception exception)
             {
@@ -221,28 +215,21 @@ namespace MeaMod.Utilities
         {
             try
             {
-                using (var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey), RegistryKeyPermissionCheck.ReadSubTree))
+                using var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey), RegistryKeyPermissionCheck.ReadSubTree);
+                if (registryKey == null)
+                    return 0;
+
+                var rawResult = registryKey.GetValue(valueName);
+                if (rawResult == null)
+                    return 0;
+
+                return registryKey.GetValueKind(valueName) switch
                 {
-                    if (registryKey == null)
-                        return 0;
-
-                    var rawResult = registryKey.GetValue(valueName);
-                    if (rawResult == null)
-                        return 0;
-
-                    switch (registryKey.GetValueKind(valueName))
-                    {
-                        case RegistryValueKind.DWord:
-                            return (int)rawResult;
-                        case RegistryValueKind.QWord:
-                            // REG_QWORD is returned boxed as long; unboxing straight to int throws
-                            return Convert.ToInt32((long)rawResult);
-                        case RegistryValueKind.String:
-                            return int.Parse((string)rawResult);
-                        default:
-                            return 0;
-                    }
-                }
+                    RegistryValueKind.DWord => (int)rawResult,
+                    RegistryValueKind.QWord => Convert.ToInt32((long)rawResult),// REG_QWORD is returned boxed as long; unboxing straight to int throws
+                    RegistryValueKind.String => int.Parse((string)rawResult),
+                    _ => 0,
+                };
             }
             catch (Exception exception)
             {
@@ -255,13 +242,8 @@ namespace MeaMod.Utilities
         {
             try
             {
-                using (var registryKey = hive.CreateSubKey(string.Concat(baseKey, appNameSubKey)))
-                {
-                    if (registryKey == null)
-                        throw new UnauthorizedAccessException("Unable to save");
-
-                    registryKey.SetValue(valueName, value, kind);
-                }
+                using var registryKey = hive.CreateSubKey(string.Concat(baseKey, appNameSubKey)) ?? throw new UnauthorizedAccessException("Unable to save");
+                registryKey.SetValue(valueName, value, kind);
             }
             catch (Exception exception)
             {
@@ -272,10 +254,8 @@ namespace MeaMod.Utilities
 
         private static string[] GetValueNames(RegistryKey hive, string baseKey, string appNameSubKey)
         {
-            using (var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey)))
-            {
-                return registryKey != null ? registryKey.GetValueNames() : new string[0];
-            }
+            using var registryKey = hive.OpenSubKey(string.Concat(baseKey, appNameSubKey));
+            return registryKey != null ? registryKey.GetValueNames() : [];
         }
 
         /// <summary>

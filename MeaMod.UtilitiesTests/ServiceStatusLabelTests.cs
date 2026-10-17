@@ -4,6 +4,7 @@ using MeaMod.Utilities.UI.WinForms;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class ServiceStatusLabelTests
     {
         [TestMethod]
@@ -46,7 +47,7 @@ namespace MeaMod.Utilities.Tests
                         if (bitmap.GetPixel(x, y).ToArgb() != Color.White.ToArgb())
                             painted++;
 
-                Assert.IsTrue(painted > 0, "nothing was drawn");
+                Assert.IsGreaterThan(0, painted, "nothing was drawn");
             });
         }
     }

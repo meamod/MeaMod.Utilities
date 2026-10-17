@@ -3,8 +3,12 @@ using System.Net.NetworkInformation;
 
 namespace MeaMod.Utilities.NetworkTools.IcmpPing
 {
+    /// <summary>Event data for <see cref="PingManager.PingResult"/>.</summary>
     public class PingResultEventArgs : EventArgs
     {
+        /// <summary>Creates a new instance of this type.</summary>
+        /// <param name="reply">The reply from the ping request, or null.</param>
+        /// <param name="exception">The exception that was thrown, if any, or null.</param>
         public PingResultEventArgs(PingReply reply, Exception exception)
         {
             this.Reply = reply;
@@ -13,12 +17,17 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
             this.LastException = exception;
         }
 
+        /// <summary>Gets or sets the reply, or null when the ping threw.</summary>
         public PingReply Reply { get; set; }
 
+        /// <summary>Gets or sets whether the host answered successfully.</summary>
         public bool Success { get; set; }
 
+        /// <summary>Gets or sets the exception thrown by the ping, if any.</summary>
         public Exception LastException { get; set; }
 
+        /// <summary>Formats the result in the style of the ping command line tool.</summary>
+        /// <returns>A one line description of the result.</returns>
         public override string ToString()
         {
             if (this.Success)

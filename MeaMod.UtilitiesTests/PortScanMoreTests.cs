@@ -5,8 +5,11 @@ using MeaMod.Utilities.NetworkTools.PortScan;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class PortScanMoreTests
     {
+        public TestContext TestContext { get; set; } = null!;
+
         [TestMethod]
         public void ManagerConstructorRejectsAnEmptyEndpoint()
         {
@@ -41,7 +44,7 @@ namespace MeaMod.Utilities.Tests
 
             manager.Start(1, 3, PortTypes.Unknown);
 
-            Assert.AreEqual(0, manager.Tasks.Count());
+            Assert.IsEmpty(manager.Tasks);
             Assert.AreEqual("127.0.0.1", manager.EndPoint);
         }
 
@@ -55,9 +58,9 @@ namespace MeaMod.Utilities.Tests
             manager.PortScanResult += (_, e) => { lock (found) found.Add(e); };
 
             manager.Start(port, port, PortTypes.Udp);
-            Task.WaitAll(manager.Tasks.ToArray(), TimeSpan.FromSeconds(10));
+            Task.WaitAll([.. manager.Tasks], TimeSpan.FromSeconds(10));
 
-            Assert.AreEqual(1, found.Count);
+            Assert.HasCount(1, found);
             Assert.AreEqual(port, found[0].Port);
             Assert.AreEqual(PortTypes.Udp, found[0].PortType);
             Assert.AreEqual("127.0.0.1", found[0].EndPoint);
@@ -73,7 +76,7 @@ namespace MeaMod.Utilities.Tests
                 IPEndPoint? remote = null;
                 byte[] data = listener.Receive(ref remote);
                 listener.Send(data, data.Length, remote);
-            });
+            }, TestContext.CancellationToken);
             var scanner = new PortScanner("127.0.0.1", port);
             bool reported = false;
             scanner.PortScanResult += (_, _) => reported = true;
@@ -81,7 +84,7 @@ namespace MeaMod.Utilities.Tests
             scanner.AttemptUdpConnectionToPort();
 
             Assert.IsTrue(reported, "a UDP port that answered was not reported");
-            Assert.IsTrue(echo.Wait(TimeSpan.FromSeconds(5)), "the echo listener never received the probe");
+            Assert.IsTrue(echo.Wait(5_000, TestContext.CancellationToken), "the echo listener never received the probe");
         }
 
         [TestMethod]
@@ -100,7 +103,7 @@ namespace MeaMod.Utilities.Tests
         }
 
         [TestMethod]
-        [Timeout(240_000)]
+        [Timeout(240_000, CooperativeCancellation = true)]
         public void FullRangeScanCanBeStopped()
         {
             // Start() with no arguments scans every TCP port on the loopback address; Stop() cancels the queued tasks.
@@ -109,9 +112,9 @@ namespace MeaMod.Utilities.Tests
             manager.Start();
             manager.Stop();
 
-            Task[] tasks = manager.Tasks.ToArray();
+            Task[] tasks = [.. manager.Tasks];
             Assert.AreEqual(ushort.MaxValue, tasks.Length);
-            Assert.IsTrue(Task.WhenAll(tasks).ContinueWith(_ => { }, TaskScheduler.Default).Wait(TimeSpan.FromSeconds(200)), "scan tasks did not finish");
+            Assert.IsTrue(Task.WhenAll(tasks).ContinueWith(_ => { }, TaskScheduler.Default).Wait(200_000, TestContext.CancellationToken), "scan tasks did not finish");
             Assert.IsTrue(tasks.All(t => t.IsCompleted));
         }
 
@@ -128,7 +131,7 @@ namespace MeaMod.Utilities.Tests
         }
 
         [TestMethod]
-        [Timeout(240_000)]
+        [Timeout(240_000, CooperativeCancellation = true)]
         public void StopFromAResultHandlerAbandonsTheRemainingPorts()
         {
             var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -148,12 +151,12 @@ namespace MeaMod.Utilities.Tests
                 };
 
                 manager.Start(port, ushort.MaxValue, PortTypes.Tcp);
-                Task[] tasks = manager.Tasks.ToArray();
-                Assert.IsTrue(Task.WhenAll(tasks).ContinueWith(_ => { }, TaskScheduler.Default).Wait(TimeSpan.FromSeconds(200)), "scan tasks did not finish");
+                Task[] tasks = [.. manager.Tasks];
+                Assert.IsTrue(Task.WhenAll(tasks).ContinueWith(_ => { }, TaskScheduler.Default).Wait(200_000, TestContext.CancellationToken), "scan tasks did not finish");
 
                 Assert.IsTrue(found, "the listening port was not reported");
                 Assert.IsTrue(manager.CurrentCancellationTokenSource.IsCancellationRequested);
-                Assert.IsTrue(tasks.Length <= ushort.MaxValue - port + 1);
+                Assert.IsLessThanOrEqualTo(ushort.MaxValue - port + 1, tasks.Length);
             }
             finally
             {

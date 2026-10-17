@@ -47,10 +47,10 @@ namespace MeaMod.Utilities.NetworkTools.TraceRoute
 
             return Task<IEnumerable<TraceRouteHopDetail>>.Factory.StartNew((Func<IEnumerable<TraceRouteHopDetail>>)(() =>
            {
-               List<TraceRouteHopDetail> traceRouteHops = new List<TraceRouteHopDetail>();
-               using (Ping ping = new Ping())
+               List<TraceRouteHopDetail> traceRouteHops = [];
+               using (Ping ping = new())
                {
-                   PingOptions options = new PingOptions(1, true);
+                   PingOptions options = new(1, true);
                    byte[] buffer = new byte[32];
 
                    while (!token.IsCancellationRequested)
@@ -115,7 +115,7 @@ namespace MeaMod.Utilities.NetworkTools.TraceRoute
         {
             if (string.IsNullOrWhiteSpace(host))
                 throw new ArgumentException("Argument \"ipAddress\" cannot be null or empty.", nameof(host));
-            using (Ping ping = new Ping())
+            using (Ping ping = new())
             {
                 try
                 {

@@ -3,6 +3,7 @@
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class AuthenticodeToolsTests
     {
         private static string SignedSystemFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "kernel32.dll");
@@ -10,7 +11,7 @@ namespace MeaMod.Utilities.Tests
         private static string CreateUnsignedFile()
         {
             string path = Path.Combine(Path.GetTempPath(), "MeaMod.Utilities.Tests." + Guid.NewGuid().ToString("N") + ".bin");
-            File.WriteAllBytes(path, Enumerable.Range(0, 4096).Select(i => (byte)i).ToArray());
+            File.WriteAllBytes(path, [.. Enumerable.Range(0, 4096).Select(i => (byte)i)]);
             return path;
         }
 
@@ -54,7 +55,7 @@ namespace MeaMod.Utilities.Tests
                     AuthenticodeTools.IsTrusted(path);
                 long after = PrivateBytes();
 
-                Assert.IsTrue(after - before < allowedGrowthBytes, $"private bytes grew by {(after - before) / 1024} KB over {iterations} calls");
+                Assert.IsLessThan(allowedGrowthBytes, after - before, $"private bytes grew by {(after - before) / 1024} KB over {iterations} calls");
             }
             finally
             {

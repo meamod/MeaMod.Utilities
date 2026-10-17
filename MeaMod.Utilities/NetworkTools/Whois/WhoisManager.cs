@@ -38,25 +38,21 @@ namespace MeaMod.Utilities.NetworkTools.Whois
             if (string.IsNullOrWhiteSpace(whoisServer))
                 throw new ArgumentException("Argument \"whoisServer\" cannot be null or empty.", nameof(whoisServer));
 
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder = new();
             try
             {
                 // TcpClient.Connect(host, port) tries every resolved address (IPv4 and IPv6) rather than only the
                 // first one, which may be an IPv6 address that an IPv4-only socket cannot connect to.
-                using (TcpClient client = new TcpClient())
-                {
-                    client.Connect(whoisServer, WhoisPort);
-                    using (NetworkStream stream = client.GetStream())
-                    {
-                        byte[] bytes = Encoding.ASCII.GetBytes(domain + "\r\n");
-                        stream.Write(bytes, 0, bytes.Length);
+                using TcpClient client = new();
+                client.Connect(whoisServer, WhoisPort);
+                using NetworkStream stream = client.GetStream();
+                byte[] bytes = Encoding.ASCII.GetBytes(domain + "\r\n");
+                stream.Write(bytes, 0, bytes.Length);
 
-                        byte[] buffer = new byte[1024];
-                        int count;
-                        while ((count = stream.Read(buffer, 0, buffer.Length)) > 0)
-                            stringBuilder.Append(Encoding.ASCII.GetString(buffer, 0, count));
-                    }
-                }
+                byte[] buffer = new byte[1024];
+                int count;
+                while ((count = stream.Read(buffer, 0, buffer.Length)) > 0)
+                    stringBuilder.Append(Encoding.ASCII.GetString(buffer, 0, count));
             }
             catch (SocketException)
             {
@@ -80,7 +76,7 @@ namespace MeaMod.Utilities.NetworkTools.Whois
             if (string.IsNullOrWhiteSpace(whoisOutput))
                 throw new ArgumentException("Argument \"whoisOutput\" cannot be null or empty.", nameof(whoisOutput));
 
-            List<string> servers = new List<string>();
+            List<string> servers = [];
 
             // Line based: this copes with a match on the first line and with a final line that has no newline.
             foreach (string rawLine in whoisOutput.Split('\n'))

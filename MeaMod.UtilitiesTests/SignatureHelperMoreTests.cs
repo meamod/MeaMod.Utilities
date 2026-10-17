@@ -5,6 +5,7 @@ using MeaMod.Utilities.Security;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class SignatureHelperMoreTests
     {
         private static readonly string TestFiles = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", "testfiles");
@@ -46,7 +47,7 @@ namespace MeaMod.Utilities.Tests
 
             Assert.AreNotEqual(SignatureStatus.NotSigned, signature.Status);
             Assert.IsNotNull(signature.SignerCertificate);
-            StringAssert.Contains(signature.SignerCertificate.Subject, "MeaMod Utilities Test Signing");
+            Assert.Contains("MeaMod Utilities Test Signing", signature.SignerCertificate.Subject);
             Assert.IsNull(signature.TimeStamperCertificate);
             Assert.AreEqual(SignatureType.Authenticode, signature.SignatureType);
             // The throw-away root is not trusted, so the simpler trust check must say no.

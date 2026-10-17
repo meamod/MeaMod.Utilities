@@ -7,6 +7,7 @@ using MmHash = MeaMod.Utilities.Cryptography.Hash;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class HashTests
     {
         private const string Input = "abc";
@@ -75,7 +76,7 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void HashingEmptyInput()
         {
-            Assert.AreEqual(Hex(SHA256.HashData(Array.Empty<byte>())), Hashing.GetHashSHA256(string.Empty));
+            Assert.AreEqual(Hex(SHA256.HashData([])), Hashing.GetHashSHA256(string.Empty));
         }
     }
 }

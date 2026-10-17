@@ -1,0 +1,29 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+trim_trailing_whitespace = true
+
+[*.cs]
+charset = utf-8-bom
+insert_final_newline = true
+
+# MeaMod.Utilities also targets netstandard2.0 and net47, so suggestions that need newer
+# framework APIs cannot be applied there and are turned off instead of nagging in the IDE.
+dotnet_diagnostic.CA1510.severity = none   # ArgumentNullException.ThrowIfNull is .NET 6+
+dotnet_diagnostic.CA1850.severity = none   # SHA256.HashData and friends are .NET 5+
+dotnet_diagnostic.CA1866.severity = none   # string.EndsWith(char) is not in netstandard2.0
+dotnet_diagnostic.IDE0056.severity = none  # the index operator needs System.Index
+dotnet_diagnostic.IDE0057.severity = none  # the range operator needs System.Range
+dotnet_diagnostic.SYSLIB1054.severity = none  # LibraryImport source generation is .NET 7+; DllImport stays for netstandard2.0/net47
+
+# Style choices for this code base.
+dotnet_diagnostic.IDE0290.severity = none  # keep explicit constructors rather than primary constructors
+
+[*.{csproj,props,targets,sln,runsettings,resx}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

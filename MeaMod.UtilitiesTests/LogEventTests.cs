@@ -6,6 +6,7 @@ using LoggingLogEvent = MeaMod.Utilities.Logging.LogEvent;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class LogEventTests
     {
         private static string Capture(Action action)
@@ -28,19 +29,19 @@ namespace MeaMod.Utilities.Tests
         [TestMethod]
         public void WriteOverloadsWriteToTheConsoleWhenAsked()
         {
-            StringAssert.Contains(Capture(() => RootLogEvent.Write("Src", "one", true)), "one");
-            StringAssert.Contains(Capture(() => RootLogEvent.Write("Src", "two", "Application", true)), "two");
-            StringAssert.Contains(Capture(() => RootLogEvent.Write("Src", "three", "Application", EventLogEntryType.Warning, true)), "three");
-            StringAssert.Contains(Capture(() => RootLogEvent.Write("Src", "four", "Application", EventLogEntryType.Error, 1234, true)), "four");
+            Assert.Contains("one", Capture(() => RootLogEvent.Write("Src", "one", true)));
+            Assert.Contains("two", Capture(() => RootLogEvent.Write("Src", "two", "Application", true)));
+            Assert.Contains("three", Capture(() => RootLogEvent.Write("Src", "three", "Application", EventLogEntryType.Warning, true)));
+            Assert.Contains("four", Capture(() => RootLogEvent.Write("Src", "four", "Application", EventLogEntryType.Error, 1234, true)));
         }
 
         [TestMethod]
         public void WriteConsoleOverloadsForwardToWrite()
         {
-            StringAssert.Contains(Capture(() => RootLogEvent.WriteConsole("Src", "one", true)), "one");
-            StringAssert.Contains(Capture(() => RootLogEvent.WriteConsole("Src", "two", "Application", true)), "two");
-            StringAssert.Contains(Capture(() => RootLogEvent.WriteConsole("Src", "three", "Application", EventLogEntryType.Warning, true)), "three");
-            StringAssert.Contains(Capture(() => RootLogEvent.WriteConsole("Src", "four", "Application", EventLogEntryType.Error, 1234, true)), "four");
+            Assert.Contains("one", Capture(() => RootLogEvent.WriteConsole("Src", "one", true)));
+            Assert.Contains("two", Capture(() => RootLogEvent.WriteConsole("Src", "two", "Application", true)));
+            Assert.Contains("three", Capture(() => RootLogEvent.WriteConsole("Src", "three", "Application", EventLogEntryType.Warning, true)));
+            Assert.Contains("four", Capture(() => RootLogEvent.WriteConsole("Src", "four", "Application", EventLogEntryType.Error, 1234, true)));
         }
 
         [TestMethod]
@@ -48,7 +49,7 @@ namespace MeaMod.Utilities.Tests
         {
             // A 300 character source cannot exist and cannot be created, so nothing is written or
             // registered even when the tests run elevated; the failure must be swallowed.
-            string source = new string('x', 300);
+            string source = new('x', 300);
 
             RootLogEvent.Write(source, "ignored", "Application", EventLogEntryType.Information, 1000, false);
         }
@@ -57,7 +58,7 @@ namespace MeaMod.Utilities.Tests
         public void LoggingNamespaceAliasStillWorks()
         {
             Assert.IsInstanceOfType<RootLogEvent>(new LoggingLogEvent());
-            StringAssert.Contains(Capture(() => LoggingLogEvent.Write("Src", "alias", true)), "alias");
+            Assert.Contains("alias", Capture(() => LoggingLogEvent.Write("Src", "alias", true)));
         }
 
         [TestMethod]

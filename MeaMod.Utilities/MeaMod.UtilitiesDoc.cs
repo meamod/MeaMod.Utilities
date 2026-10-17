@@ -5,7 +5,7 @@
     /// <para>Licence: MIT</para>
     /// </summary>
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-        class NamespaceDoc
-        {
-        }
+    class NamespaceDoc
+    {
+    }
 }

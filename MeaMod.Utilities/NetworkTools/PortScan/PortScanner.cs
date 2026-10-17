@@ -40,10 +40,9 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
             try
             {
                 // Disposed on every path, including a failed connect, so a full-range scan does not leak sockets.
-                using (TcpClient tcpClient = new TcpClient { ExclusiveAddressUse = false })
-                {
-                    tcpClient.Connect(this.EndPointName, this.Port);
-                }
+                using TcpClient tcpClient = new()
+                { ExclusiveAddressUse = false };
+                tcpClient.Connect(this.EndPointName, this.Port);
             }
             catch (SocketException)
             {
@@ -62,27 +61,26 @@ namespace MeaMod.Utilities.NetworkTools.PortScan
             bool openOrFiltered;
             try
             {
-                using (UdpClient udpClient = new UdpClient { ExclusiveAddressUse = false })
-                {
-                    udpClient.Connect(this.EndPointName, this.Port);
-                    udpClient.Client.ReceiveTimeout = UdpProbeTimeoutMilliseconds;
-                    udpClient.Send(new byte[1], 1);
+                using UdpClient udpClient = new()
+                { ExclusiveAddressUse = false };
+                udpClient.Connect(this.EndPointName, this.Port);
+                udpClient.Client.ReceiveTimeout = UdpProbeTimeoutMilliseconds;
+                udpClient.Send(new byte[1], 1);
 
-                    IPEndPoint remote = null;
-                    try
-                    {
-                        udpClient.Receive(ref remote);
-                        openOrFiltered = true;
-                    }
-                    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
-                    {
-                        openOrFiltered = true;
-                    }
-                    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
-                    {
-                        // ICMP port unreachable: nothing is listening.
-                        openOrFiltered = false;
-                    }
+                IPEndPoint remote = null;
+                try
+                {
+                    udpClient.Receive(ref remote);
+                    openOrFiltered = true;
+                }
+                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
+                {
+                    openOrFiltered = true;
+                }
+                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
+                {
+                    // ICMP port unreachable: nothing is listening.
+                    openOrFiltered = false;
                 }
             }
             catch (SocketException)

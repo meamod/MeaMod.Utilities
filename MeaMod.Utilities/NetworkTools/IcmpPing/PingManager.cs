@@ -10,7 +10,7 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
     public class PingManager : IPingManager, INetworkManager
     {
         private Task pingTask;
-        private CancellationTokenSource pingCancellationToken = new CancellationTokenSource();
+        private CancellationTokenSource pingCancellationToken = new();
 
         /// <summary>Creates a new instance of this type.</summary>
         /// <param name="hostName">The hostname to ping.</param>
@@ -82,7 +82,7 @@ namespace MeaMod.Utilities.NetworkTools.IcmpPing
                 while (!token.IsCancellationRequested)
                 {
                     this.OnStateChangedEvent(PingManagerStates.Pinging);
-                    using (Ping ping = new Ping())
+                    using (Ping ping = new())
                     {
                         try
                         {

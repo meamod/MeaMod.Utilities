@@ -2,21 +2,17 @@
 using System;
 using System.Windows.Forms;
 
-
-
 namespace MeaMod.Utilities
 {
-    /// <summary>
-    /// 
-    /// </summary>
+    /// <summary>Extension methods for <see cref="Control"/>.</summary>
     public static class ControlExtensions
     {
         /// <summary>
-        /// Executes the Action asynchronously on the UI thread, does not block execution on the calling thread.
+        /// Runs <paramref name="code"/> on the thread that owns <paramref name="this"/>: inline when already on it,
+        /// otherwise posted with <see cref="Control.BeginInvoke(Delegate)"/> without blocking the caller.
         /// </summary>
-        /// <param name="this"></param>
-        /// <param name="control"></param>
-        /// <param name="code"></param>
+        /// <param name="this">The control whose thread the code must run on.</param>
+        /// <param name="code">The code to run.</param>
         public static void RunOnUIThread(this Control @this, Action code)
         {
             if (@this.InvokeRequired)

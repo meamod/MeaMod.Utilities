@@ -5,6 +5,7 @@ using MeaMod.Utilities.NetworkTools.PortScan;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class PortScanTests
     {
         [TestMethod]
@@ -20,14 +21,14 @@ namespace MeaMod.Utilities.Tests
                 manager.PortScanResult += (_, e) => { lock (found) found.Add(e.Port); };
 
                 manager.Start(port, port, PortTypes.Tcp);
-                Task.WaitAll(manager.Tasks.ToArray(), TimeSpan.FromSeconds(10));
-                CollectionAssert.AreEqual(new[] { port }, found);
+                Task.WaitAll([.. manager.Tasks], TimeSpan.FromSeconds(10));
+                Assert.AreSequenceEqual([port], found);
 
                 // The old manager never replaced its cancelled token source, so a scan after Stop() did nothing.
                 manager.Stop();
                 manager.Start(port, port, PortTypes.Tcp);
-                Task.WaitAll(manager.Tasks.ToArray(), TimeSpan.FromSeconds(10));
-                CollectionAssert.AreEqual(new[] { port, port }, found);
+                Task.WaitAll([.. manager.Tasks], TimeSpan.FromSeconds(10));
+                Assert.AreSequenceEqual([port, port], found);
             }
             finally
             {

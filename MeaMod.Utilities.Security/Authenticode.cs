@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using System;
@@ -14,7 +14,7 @@ namespace MeaMod.Utilities.Security
     /// </summary>
     internal static class SignatureHelper
     {
-        private static Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 = new Guid("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
+        private static Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 = new("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
 
         /// <summary>
         /// Get signature on the specified file.
@@ -33,16 +33,11 @@ namespace MeaMod.Utilities.Security
         /// </exception>
         internal static Signature GetSignature(string fileName, byte[] fileContent)
         {
-            return GetSignatureFromWinVerifyTrust(fileName, fileContent);;
+            return GetSignatureFromWinVerifyTrust(fileName, fileContent); ;
         }
 
         private static Signature GetSignatureFromWinVerifyTrust(string fileName, byte[] fileContent)
         {
-            Signature signature = null;
-
-            WinTrustMethods.WINTRUST_DATA wtd;
-            uint error = Win32Errors.E_FAIL;
-
             if (fileContent == null)
             {
                 Utils.CheckArgForNullOrEmpty(fileName, "fileName");
@@ -51,10 +46,10 @@ namespace MeaMod.Utilities.Security
                 // SecurityUtils.CheckIfFileSmallerThan4Bytes(fileName);
             }
 
+            Signature signature;
             try
             {
-                error = GetWinTrustData(fileName, fileContent, out wtd);
-
+                uint error = GetWinTrustData(fileName, fileContent, out WinTrustMethods.WINTRUST_DATA wtd);
                 if (error != Win32Errors.NO_ERROR)
                 {
                     System.Diagnostics.Debug.WriteLine("GetWinTrustData failed: {0:x}", error);

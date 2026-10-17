@@ -9,7 +9,7 @@ namespace MeaMod.Utilities
     public class UserTimeout
     {
         private static int idletime;
-        private static LASTINPUTINFO lastInputInf = new LASTINPUTINFO();
+        private static LASTINPUTINFO lastInputInf = new();
 
         [StructLayout(LayoutKind.Sequential)]
         private struct LASTINPUTINFO
@@ -23,10 +23,10 @@ namespace MeaMod.Utilities
         [DllImport("user32.dll")]
         private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
-       /// <summary>
-       /// Get the last input in seconds
-       /// </summary>
-       /// <returns>Last user input in seconds as Integer</returns>
+        /// <summary>
+        /// Get the last input in seconds
+        /// </summary>
+        /// <returns>Last user input in seconds as Integer</returns>
         public static int GetLastInputTime()
         {
             idletime = 0;

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 using System.ComponentModel;
@@ -318,7 +318,7 @@ namespace MeaMod.Utilities.Security
 
                 case SignatureStatus.UnknownError:
                     int intError = SecuritySupport.GetIntFromDWORD(error);
-                    Win32Exception e = new Win32Exception(intError);
+                    Win32Exception e = new(intError);
                     message = e.Message;
                     break;
 

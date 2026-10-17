@@ -4,8 +4,11 @@ using MeaMod.Utilities.NetworkTools.IcmpPing;
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class PingTests
     {
+        public TestContext TestContext { get; set; } = null!;
+
         [TestMethod]
         public void PingResultEventArgsToStringSurvivesAnExceptionWithoutInnerException()
         {
@@ -38,7 +41,7 @@ namespace MeaMod.Utilities.Tests
             manager.Start();
             manager.Stop();
 
-            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(10)), "Stopped state was never raised");
+            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(10), TestContext.CancellationToken), "Stopped state was never raised");
             int afterStop = Volatile.Read(ref results);
             Thread.Sleep(2500);
             Assert.AreEqual(afterStop, Volatile.Read(ref results), "pings continued after Stop()");
@@ -55,10 +58,10 @@ namespace MeaMod.Utilities.Tests
             manager.PingManagerStateChanged += (_, e) => { if (e.NewState == PingManagerStates.Stopped) stopped.Set(); };
 
             manager.Start();
-            Assert.IsTrue(firstResult.Wait(TimeSpan.FromSeconds(10)), "no ping result");
+            Assert.IsTrue(firstResult.Wait(TimeSpan.FromSeconds(10), TestContext.CancellationToken), "no ping result");
 
             manager.Stop();
-            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(3)), "Stop() took longer than 3 seconds");
+            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(3), TestContext.CancellationToken), "Stop() took longer than 3 seconds");
         }
 
         [TestMethod]
@@ -77,10 +80,10 @@ namespace MeaMod.Utilities.Tests
             manager.Start();
             Thread.Sleep(2500);
             manager.Stop();
-            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(10)));
+            Assert.IsTrue(stopped.Wait(TimeSpan.FromSeconds(10), TestContext.CancellationToken));
 
             // One loop pinging every second for ~2.5 s gives about 3 Pinging states; two loops would give about 6.
-            Assert.IsTrue(Volatile.Read(ref pinging) <= 4, $"{pinging} Pinging states");
+            Assert.IsLessThanOrEqualTo(4, Volatile.Read(ref pinging), $"{pinging} Pinging states");
         }
     }
 }

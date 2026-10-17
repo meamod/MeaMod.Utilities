@@ -6,6 +6,7 @@ using BclAuthorityKeyIdentifier = System.Security.Cryptography.X509Certificates.
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class X509AuthorityKeyIdentifierExtensionTests
     {
         private static X509Certificate2 CreateSelfSigned(bool withSubjectKeyIdentifier)
@@ -27,7 +28,7 @@ namespace MeaMod.Utilities.Tests
             var expected = BclAuthorityKeyIdentifier.CreateFromSubjectKeyIdentifier(subjectKeyIdentifier);
 
             // The previous implementation copied from offset 0 of the SKI raw data, so the key id was wrong.
-            CollectionAssert.AreEqual(expected.RawData, ours.RawData, Convert.ToHexString(ours.RawData));
+            Assert.AreSequenceEqual(expected.RawData, ours.RawData, Convert.ToHexString(ours.RawData));
             Assert.AreEqual("2.5.29.35", ours.Oid?.Value);
         }
 

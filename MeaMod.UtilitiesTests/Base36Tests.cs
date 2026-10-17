@@ -3,6 +3,7 @@
 namespace MeaMod.Utilities.Tests
 {
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class Base36Tests
     {
         private const string LongMax = "1Y2P0IJ32E8E7";
@@ -12,28 +13,28 @@ namespace MeaMod.Utilities.Tests
         public void CompareUsesStringCompareSemantics()
         {
             // The old implementation returned the opposite sign.
-            Assert.IsTrue(Base36.Compare("1", "2") < 0);
-            Assert.IsTrue(Base36.Compare("2", "1") > 0);
+            Assert.IsLessThan(0, Base36.Compare("1", "2"));
+            Assert.IsGreaterThan(0, Base36.Compare("2", "1"));
             Assert.AreEqual(0, Base36.Compare("A", "a"));
-            Assert.IsTrue(Base36.Compare("Z", "10") < 0, "35 < 36");
-            Assert.IsTrue(Base36.Compare("10", "Z") > 0);
+            Assert.IsLessThan(0, Base36.Compare("Z", "10"), "35 < 36");
+            Assert.IsGreaterThan(0, Base36.Compare("10", "Z"));
         }
 
         [TestMethod]
         public void CompareHandlesNegativeValues()
         {
-            Assert.IsTrue(Base36.Compare("-1", "1") < 0);
-            Assert.IsTrue(Base36.Compare("1", "-1") > 0);
-            Assert.IsTrue(Base36.Compare("-2", "-1") < 0);
-            Assert.IsTrue(Base36.Compare("-1", "-2") > 0);
-            Assert.IsTrue(Base36.Compare("-10", "-Z") < 0);
+            Assert.IsLessThan(0, Base36.Compare("-1", "1"));
+            Assert.IsGreaterThan(0, Base36.Compare("1", "-1"));
+            Assert.IsLessThan(0, Base36.Compare("-2", "-1"));
+            Assert.IsGreaterThan(0, Base36.Compare("-1", "-2"));
+            Assert.IsLessThan(0, Base36.Compare("-10", "-Z"));
         }
 
         [TestMethod]
         public void CompareIgnoresLeadingZeros()
         {
             Assert.AreEqual(0, Base36.Compare("007", "7"));
-            Assert.IsTrue(Base36.Compare("0010", "9") > 0);
+            Assert.IsGreaterThan(0, Base36.Compare("0010", "9"));
             Assert.AreEqual(0, Base36.Compare("-0", "0"));
         }
 
